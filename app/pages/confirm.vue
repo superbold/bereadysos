@@ -7,6 +7,7 @@ type Status = 'loading' | 'success' | 'error'
 
 const user = useSupabaseUser()
 const route = useRoute()
+const supabase = useSupabaseClient()
 
 const status = ref<Status>('loading')
 const errorMessage = ref('')
@@ -43,13 +44,24 @@ function scheduleRedirect() {
   }, 2200)
 }
 
-onMounted(() => {
+onMounted(async () => {
   const authError = parseAuthError()
 
   if (authError) {
     status.value = 'error'
     errorMessage.value = authError
     return
+  }
+
+  const code = route.query.code
+  if (typeof code === 'string' && code.length > 0) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (error) {
+      status.value = 'error'
+      errorMessage.value = error.message
+      return
+    }
   }
 
   failTimer = setTimeout(() => {

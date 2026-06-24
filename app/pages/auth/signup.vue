@@ -10,6 +10,7 @@ const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const toast = useToast()
 const loading = ref(false)
+const authRedirectUrl = useAuthRedirectUrl()
 
 const schema = z.object({
   email: z.email('Enter a valid email address'),
@@ -57,7 +58,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   const { error } = await supabase.auth.signUp({
     email: event.data.email,
-    password: event.data.password
+    password: event.data.password,
+    options: {
+      emailRedirectTo: authRedirectUrl.value
+    }
   })
 
   loading.value = false

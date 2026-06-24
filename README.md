@@ -116,6 +116,16 @@ These are separate:
 
 Use the same Supabase project. Add `http://localhost:3000/confirm` (or `:3001` if 3000 is in use) to Supabase redirect URLs. Resend delivers real confirmation emails in dev — use a real inbox when testing.
 
+**Important:** If **Site URL** in Supabase is `http://localhost:3000`, confirmation emails will link to localhost. That only works on the machine running `pnpm dev` — clicking the link on a phone will fail. For real sign-up tests, set **Site URL** to your production URL (`https://bereadysos.com`) and sign up on the live site. Keep localhost URLs in **Redirect URLs** only for local dev.
+
+### Troubleshooting confirmation links
+
+| Symptom | Cause | Fix |
+|---------|--------|-----|
+| Safari can't connect to `localhost` | Site URL is localhost; link opened on another device | Set Supabase **Site URL** to `https://bereadysos.com` |
+| Link goes to `/?code=...` instead of `/confirm` | `emailRedirectTo` not set on sign-up | Fixed in app — sign up again for a new email |
+| Link opens but spins forever | Redirect URL not allowlisted | Add `https://bereadysos.com/confirm` to Supabase **Redirect URLs** |
+
 ## Setup
 
 ### Prerequisites
