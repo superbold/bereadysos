@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { EmailOtpType } from '@supabase/supabase-js'
+
 definePageMeta({
   layout: 'auth-confirm'
 })
@@ -53,9 +55,39 @@ async function finishWithSession() {
 
   clearTimeout(redirectTimer)
   redirectTimer = setTimeout(() => {
-    // Full reload so auth middleware and SSR see the session cookie.
     navigateTo('/', { external: true })
-  }, 1500)
+  }, 2200)
+}
+
+async function establishSessionFromUrl() {
+  const code = route.query.code
+  if (typeof code === 'string' && code.length > 0) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (error) {
+      throw error
+    }
+    return
+  }
+
+  const tokenHash = route.query.token_hash
+  const type = route.query.type
+  if (typeof tokenHash === 'string' && tokenHash.length > 0 && typeof type === 'string') {
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: type as EmailOtpType
+    })
+    if (error) {
+      throw error
+    }
+    return
+  }
+
+  if (import.meta.client && window.location.hash.includes('access_token')) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      throw new Error('We could not confirm your email. The link may have expired.')
+    }
+  }
 }
 
 onMounted(async () => {
@@ -67,18 +99,16 @@ onMounted(async () => {
     return
   }
 
-  const code = route.query.code
-  if (typeof code === 'string' && code.length > 0) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-
-    if (error) {
-      status.value = 'error'
-      errorMessage.value = error.message
-      return
-    }
+  try {
+    await establishSessionFromUrl()
+    await finishWithSession()
+  } catch (error) {
+    status.value = 'error'
+    errorMessage.value = error instanceof Error
+      ? error.message
+      : 'We could not confirm your email. The link may have expired.'
+    return
   }
-
-  await finishWithSession()
 
   failTimer = setTimeout(() => {
     if (!handled.value && status.value === 'loading') {

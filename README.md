@@ -118,13 +118,19 @@ Use the same Supabase project. Add `http://localhost:3000/confirm` (or `:3001` i
 
 **Important:** If **Site URL** in Supabase is `http://localhost:3000`, confirmation emails will link to localhost. That only works on the machine running `pnpm dev` — clicking the link on a phone will fail. For real sign-up tests, set **Site URL** to your production URL (`https://bereadysos.com`) and sign up on the live site. Keep localhost URLs in **Redirect URLs** only for local dev.
 
-### Troubleshooting confirmation links
+### Troubleshooting auth
 
 | Symptom | Cause | Fix |
 |---------|--------|-----|
 | Safari can't connect to `localhost` | Site URL is localhost; link opened on another device | Set Supabase **Site URL** to `https://bereadysos.com` |
 | Link goes to `/?code=...` instead of `/confirm` | `emailRedirectTo` not set on sign-up | Fixed in app — sign up again for a new email |
 | Link opens but spins forever | Redirect URL not allowlisted | Add `https://bereadysos.com/confirm` to Supabase **Redirect URLs** |
+| Blank screen after confirm; dashboard appears after F5 | Client-side redirect to `/` ran before the session cookie was written; auth middleware bounced between `/` and `/auth/login` | Fixed in app — `/confirm` uses a full-page redirect (`external: true`) after the session is established |
+| Email link opens login ("Welcome back") instead of "You're ready!" | Link landed on `/` or `/auth/login` with `?code=`; auth middleware stripped the code and sent user to login | Fixed in app — global middleware forwards auth query params to `/confirm` |
+
+**Blank screen detail:** After email confirmation, Supabase sets a session cookie. A soft client-side navigation to `/` can run before that cookie is visible to Nuxt's auth middleware, which redirects unauthenticated users to login while the Supabase client still holds the user in memory — causing a redirect loop and a blank page. A full page load reads the cookie correctly (which is why F5 worked). The app now waits for `getSession()` on `/confirm`, then redirects with a full reload.
+
+**Email template:** Customize the confirmation email under Supabase **Authentication → Emails → Templates** (Confirm signup). Use `{{ .ConfirmationURL }}` for the link. Branding the HTML is optional but improves the "boring email" experience — Resend delivers whatever Supabase sends.
 
 ## Setup
 

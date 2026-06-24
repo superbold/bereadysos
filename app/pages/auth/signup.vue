@@ -10,6 +10,8 @@ const supabase = useSupabaseClient()
 const user = useSupabaseUser()
 const toast = useToast()
 const loading = ref(false)
+const signedUp = ref(false)
+const signedUpEmail = ref('')
 const authRedirectUrl = useAuthRedirectUrl()
 
 const schema = z.object({
@@ -49,7 +51,7 @@ const fields = [
 
 watch(user, (value) => {
   if (value) {
-    navigateTo('/')
+    navigateTo('/', { external: true })
   }
 }, { immediate: true })
 
@@ -76,20 +78,53 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     return
   }
 
-  toast.add({
-    title: 'Account created',
-    description: 'Check your email if confirmation is required, or sign in to continue.',
-    color: 'success',
-    icon: 'i-lucide-check-circle'
-  })
-
-  await navigateTo('/auth/login')
+  signedUpEmail.value = event.data.email
+  signedUp.value = true
 }
 </script>
 
 <template>
   <div>
+    <div
+      v-if="signedUp"
+      class="flex flex-col items-center text-center"
+    >
+      <div
+        class="flex size-14 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20"
+        aria-hidden="true"
+      >
+        <UIcon
+          name="i-lucide-mail-check"
+          class="size-8 text-primary"
+        />
+      </div>
+
+      <h1 class="mt-4 text-xl font-semibold text-highlighted">
+        Check your email
+      </h1>
+
+      <p class="mt-2 max-w-xs text-sm leading-relaxed text-muted">
+        We sent a confirmation link to
+        <span class="font-medium text-highlighted">{{ signedUpEmail }}</span>.
+        Click it to finish setting up your account.
+      </p>
+
+      <p class="mt-4 max-w-xs text-xs text-muted">
+        The link opens a short confirmation screen, then takes you straight to your dashboard.
+      </p>
+
+      <UButton
+        to="/auth/login"
+        label="Already confirmed? Sign in"
+        color="neutral"
+        variant="soft"
+        class="mt-6"
+        block
+      />
+    </div>
+
     <UAuthForm
+      v-else
       :schema="schema"
       :fields="fields"
       icon="i-lucide-user-plus"
