@@ -127,10 +127,29 @@ Use the same Supabase project. Add `http://localhost:3000/confirm` (or `:3001` i
 | Link opens but spins forever | Redirect URL not allowlisted | Add `https://bereadysos.com/confirm` to Supabase **Redirect URLs** |
 | Blank screen after confirm; dashboard appears after F5 | Client-side redirect to `/` ran before the session cookie was written; auth middleware bounced between `/` and `/auth/login` | Fixed in app — `/confirm` uses a full-page redirect (`external: true`) after the session is established |
 | Email link opens login ("Welcome back") instead of "You're ready!" | Link landed on `/` or `/auth/login` with `?code=`; auth middleware stripped the code and sent user to login | Fixed in app — global middleware forwards auth query params to `/confirm` |
+| `PKCE code verifier not found in storage` | Default `{{ .ConfirmationURL }}` uses PKCE; link opened on a different device/browser than sign-up | Update Supabase **Confirm signup** email template to use `token_hash` (see below) |
 
 **Blank screen detail:** After email confirmation, Supabase sets a session cookie. A soft client-side navigation to `/` can run before that cookie is visible to Nuxt's auth middleware, which redirects unauthenticated users to login while the Supabase client still holds the user in memory — causing a redirect loop and a blank page. A full page load reads the cookie correctly (which is why F5 worked). The app now waits for `getSession()` on `/confirm`, then redirects with a full reload.
 
-**Email template:** Customize the confirmation email under Supabase **Authentication → Emails → Templates** (Confirm signup). Use `{{ .ConfirmationURL }}` for the link. Branding the HTML is optional but improves the "boring email" experience — Resend delivers whatever Supabase sends.
+### Confirm signup email template (required)
+
+The default `{{ .ConfirmationURL }}` uses PKCE and **only works if the user opens the email on the same browser where they signed up**. For phone mail apps and cross-device use, edit **Authentication → Emails → Templates → Confirm signup**.
+
+Replace the confirmation link with:
+
+```html
+<h2>Confirm your BeReady SOS account</h2>
+<p>Tap the button below to confirm your email and open your dashboard.</p>
+<p>
+  <a href="{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=email">
+    Confirm your email
+  </a>
+</p>
+```
+
+Ensure **Site URL** is `https://bereadysos.com` (not localhost). The app verifies the token on the server, sets the session cookie, then shows **"You're ready!"** on `/confirm`.
+
+You can style the HTML further; Resend delivers whatever Supabase sends.
 
 ## Setup
 

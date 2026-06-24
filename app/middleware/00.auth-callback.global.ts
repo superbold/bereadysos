@@ -19,6 +19,14 @@ export default defineNuxtRouteMiddleware((to) => {
     && typeof type === 'string' && type.length > 0
 
   if (hasCode || hasTokenHash) {
+    // token_hash links go through the server route so cookies are set before /confirm
+    if (hasTokenHash) {
+      return navigateTo({
+        path: '/api/auth/confirm',
+        query: { ...to.query }
+      }, { replace: true })
+    }
+
     return navigateTo({
       path: '/confirm',
       query: { ...to.query }

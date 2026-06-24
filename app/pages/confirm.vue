@@ -17,16 +17,21 @@ let redirectTimer: ReturnType<typeof setTimeout> | undefined
 let failTimer: ReturnType<typeof setTimeout> | undefined
 
 function parseAuthError(): string | null {
+  const queryError = route.query.error
+  if (typeof queryError === 'string' && queryError.length > 0) {
+    if (queryError === 'missing_token') {
+      return 'This confirmation link is incomplete. Request a new email from sign in.'
+    }
+    return decodeURIComponent(queryError)
+  }
+
   if (import.meta.server) {
     return null
   }
 
   const hashParams = new URLSearchParams(window.location.hash.slice(1))
-  const query = route.query
-
-  const error = hashParams.get('error') ?? (query.error as string | undefined)
+  const error = hashParams.get('error')
   const description = hashParams.get('error_description')
-    ?? (query.error_description as string | undefined)
 
   if (!error && !description) {
     return null
@@ -37,6 +42,17 @@ function parseAuthError(): string | null {
   }
 
   return 'This link is invalid or has expired.'
+}
+
+function isPkceVerifierError(message: string) {
+  return message.toLowerCase().includes('pkce') || message.toLowerCase().includes('code verifier')
+}
+
+function friendlyErrorMessage(message: string) {
+  if (isPkceVerifierError(message)) {
+    return 'This link must be opened on the same device and browser where you signed up — or update the Supabase email template to use token_hash (see README). Your email may already be confirmed; try signing in.'
+  }
+  return message
 }
 
 async function finishWithSession() {
@@ -60,22 +76,24 @@ async function finishWithSession() {
 }
 
 async function establishSessionFromUrl() {
-  const code = route.query.code
-  if (typeof code === 'string' && code.length > 0) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+  // Prefer token_hash — works cross-device (phone email app, etc.)
+  const tokenHash = route.query.token_hash
+  const type = route.query.type
+  if (typeof tokenHash === 'string' && tokenHash.length > 0) {
+    const otpType = (typeof type === 'string' ? type : 'email') as EmailOtpType
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: otpType
+    })
     if (error) {
       throw error
     }
     return
   }
 
-  const tokenHash = route.query.token_hash
-  const type = route.query.type
-  if (typeof tokenHash === 'string' && tokenHash.length > 0 && typeof type === 'string') {
-    const { error } = await supabase.auth.verifyOtp({
-      token_hash: tokenHash,
-      type: type as EmailOtpType
-    })
+  const code = route.query.code
+  if (typeof code === 'string' && code.length > 0) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (error) {
       throw error
     }
@@ -95,7 +113,16 @@ onMounted(async () => {
 
   if (authError) {
     status.value = 'error'
-    errorMessage.value = authError
+    errorMessage.value = friendlyErrorMessage(authError)
+    return
+  }
+
+  if (route.query.success === '1') {
+    await finishWithSession()
+    if (!handled.value) {
+      status.value = 'error'
+      errorMessage.value = 'Your email was confirmed, but we could not start a session. Please sign in.'
+    }
     return
   }
 
@@ -104,9 +131,8 @@ onMounted(async () => {
     await finishWithSession()
   } catch (error) {
     status.value = 'error'
-    errorMessage.value = error instanceof Error
-      ? error.message
-      : 'We could not confirm your email. The link may have expired.'
+    const message = error instanceof Error ? error.message : 'We could not confirm your email. The link may have expired.'
+    errorMessage.value = friendlyErrorMessage(message)
     return
   }
 
