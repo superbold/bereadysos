@@ -5,12 +5,12 @@ definePageMeta({
 
 type Status = 'loading' | 'success' | 'error'
 
-const user = useSupabaseUser()
 const route = useRoute()
 const supabase = useSupabaseClient()
 
 const status = ref<Status>('loading')
 const errorMessage = ref('')
+const handled = ref(false)
 let redirectTimer: ReturnType<typeof setTimeout> | undefined
 let failTimer: ReturnType<typeof setTimeout> | undefined
 
@@ -37,11 +37,25 @@ function parseAuthError(): string | null {
   return 'This link is invalid or has expired.'
 }
 
-function scheduleRedirect() {
+async function finishWithSession() {
+  if (handled.value || status.value === 'error') {
+    return
+  }
+
+  const { data: { session } } = await supabase.auth.getSession()
+
+  if (!session) {
+    return
+  }
+
+  handled.value = true
+  status.value = 'success'
+
   clearTimeout(redirectTimer)
   redirectTimer = setTimeout(() => {
-    navigateTo('/')
-  }, 2200)
+    // Full reload so auth middleware and SSR see the session cookie.
+    navigateTo('/', { external: true })
+  }, 1500)
 }
 
 onMounted(async () => {
@@ -64,20 +78,15 @@ onMounted(async () => {
     }
   }
 
+  await finishWithSession()
+
   failTimer = setTimeout(() => {
-    if (status.value === 'loading' && !user.value) {
+    if (!handled.value && status.value === 'loading') {
       status.value = 'error'
       errorMessage.value = 'We could not confirm your email. The link may have expired.'
     }
   }, 12000)
 })
-
-watch(user, (value) => {
-  if (value && status.value !== 'error') {
-    status.value = 'success'
-    scheduleRedirect()
-  }
-}, { immediate: true })
 
 onUnmounted(() => {
   clearTimeout(redirectTimer)

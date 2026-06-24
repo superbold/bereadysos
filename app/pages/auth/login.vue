@@ -7,7 +7,7 @@ definePageMeta({
 })
 
 const supabase = useSupabaseClient()
-const user = useSupabaseUser()
+const session = useSupabaseSession()
 const toast = useToast()
 const loading = ref(false)
 
@@ -35,9 +35,9 @@ const fields = [
   }
 ]
 
-watch(user, (value) => {
+watch(session, (value) => {
   if (value) {
-    navigateTo('/')
+    navigateTo('/', { external: true })
   }
 }, { immediate: true })
 
@@ -61,7 +61,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     return
   }
 
-  await navigateTo('/')
+  await navigateTo('/', { external: true })
 }
 </script>
 
