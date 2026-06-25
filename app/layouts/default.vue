@@ -52,13 +52,15 @@ async function signOut() {
         <UColorModeButton />
 
         <template v-if="user">
-          <UButton
-            to="/settings"
-            icon="i-lucide-settings"
-            color="neutral"
-            variant="ghost"
-            aria-label="Settings"
-          />
+          <UTooltip text="Settings">
+            <UButton
+              to="/settings"
+              icon="i-lucide-settings"
+              color="neutral"
+              variant="ghost"
+              aria-label="Settings"
+            />
+          </UTooltip>
           <UButton
             icon="i-lucide-log-out"
             color="neutral"

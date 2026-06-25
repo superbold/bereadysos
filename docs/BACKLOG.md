@@ -75,6 +75,7 @@ _Nothing active — pick from **Next** below._
 
 ## Later
 
+- [ ] **Add pets to household** — track pets in settings; factor into water/food planning
 - [ ] **Scenarios & containers** — shelter-in-place vs mobile/evacuation; “what items are where?” (see `DECISIONS.md`)
 - [ ] Household invites / sharing
 - [ ] Starter templates (72-hour kit, earthquake, winter storm)
