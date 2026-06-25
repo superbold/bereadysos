@@ -24,27 +24,30 @@ Living list of what’s shipped and what’s next. Update when a phase lands or 
 - [x] Supabase email template uses `token_hash` (not default `ConfirmationURL` / PKCE)
 
 ### App shell
-- [x] Dashboard placeholder (`/`)
-- [x] Nav links (Inventory, Plan, Expiring, Settings) — pages not built yet
+- [x] Dashboard with household summary (`/`)
+- [x] Nav links (Inventory, Plan, Expiring, Settings) — inventory/plan/expiring pages not built yet
+- [x] Settings gear tooltip (“Settings” on hover)
 - [x] README with Vercel / Supabase / Resend flow
 
 ### Docs
 - [x] `docs/BACKLOG.md` (this file)
 - [x] `docs/DECISIONS.md`
+- [x] `supabase/README.md` (migration apply notes)
 
-### Database (Phase 1)
+### Database (Phase 1) — complete
 - [x] Migration: `households`, `household_members`, `categories`, `items` (`supabase/migrations/`)
 - [x] Row Level Security (household-scoped)
 - [x] Seed categories (water, food, medical, hygiene, power, tools, documents)
 - [x] TypeScript types (`app/types/database.types.ts`)
-- [x] **Apply migration in Supabase** — see `supabase/README.md`
+- [x] **Apply migration in Supabase** (`20260623120000_initial_schema.sql`)
 
-### Household (Phase 2)
+### Household (Phase 2) — complete
 - [x] `useHousehold` composable + client plugin (auto-create on sign-in)
 - [x] `/settings` — name, headcount, target days (3/7/14/30/90 presets)
 - [x] Dashboard shows household summary
-- [x] `bootstrap_household` RPC migration applied (RLS fix)
-- [ ] **Apply migration** `20260623130000_household_one_per_user.sql` (optional but recommended)
+- [x] `bootstrap_household()` RPC — atomic household + member create (RLS fix)
+- [x] **Apply migration** `20260623140000_bootstrap_household_rpc.sql`
+- [ ] **Apply migration** `20260623130000_household_one_per_user.sql` (optional — one household per user)
 
 ---
 
@@ -62,7 +65,7 @@ _Nothing active — pick from **Next** below._
 - [ ] Empty states + mobile-friendly forms
 
 ### Phase 4 — Dashboard
-- [ ] Target-day presets (3 / 7 / 14 / 30 / 90)
+- [ ] Target-day presets (3 / 7 / 14 / 30 / 90) on dashboard
 - [ ] Coverage summary per category (water, food, checklist categories)
 - [ ] Expiring-soon count + quick links
 - [ ] `shared/` coverage math (unit-testable pure functions)
@@ -84,7 +87,7 @@ _Nothing active — pick from **Next** below._
 - [ ] Consumption log (decrement qty when used)
 - [ ] Push / email expiration reminders (Edge Functions + cron)
 - [ ] PWA / offline
-- [ ] Custom domain polish (`bereadysos.com` everywhere in copy)
+- [ ] Custom domain polish (`bereadysos.com` everywhere in copy; nav still says “SOS Planner”)
 
 ---
 

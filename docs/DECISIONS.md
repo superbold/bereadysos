@@ -11,12 +11,16 @@ Short record of choices worth remembering across sessions. Add a dated entry whe
 | Product name | **BeReady SOS** | Repo: `bereadysos`; working folder `sos-mk1` |
 | Primary domain | `bereadysos.com` | App on Vercel |
 | MVP scope | Inventory + expiration + days planning | Household sharing deferred past MVP |
-| Default target days | 7 (presets: 3/7/14/30/90) | Editable in settings (planned) |
+| Default target days | 7 (presets: 3/7/14/30/90) | Editable in `/settings` |
 | Headcount | Single number per household | Named members later if needed |
 
 ---
 
 ## Future concepts (not scheduled)
+
+### Pets in the household
+
+Track pets in settings (backlog **Later**). Factor into water/food planning — e.g. extra water per pet per day. Details TBD when promoted from backlog.
 
 ### Scenarios: shelter in place vs go mobile
 
@@ -51,10 +55,11 @@ For mobile readiness, users need **“What items are where?”** — not just to
 |----------|--------|-------|
 | Framework | Nuxt 4.4.x + Vue 3 | `app/` directory layout |
 | UI | Nuxt UI 4 + Tailwind | Primary color: green |
-| Backend | Supabase | Auth now; Postgres for inventory next |
+| Backend | Supabase | Auth + Postgres; household & categories live |
 | Email delivery | Resend via Supabase SMTP | App does **not** call Resend API |
 | Hosting | Vercel | Env: `NUXT_PUBLIC_SUPABASE_URL`, `NUXT_PUBLIC_SUPABASE_KEY` only |
 | Package manager | pnpm | |
+| Migrations | `supabase/migrations/` in repo | Apply via SQL Editor; see `supabase/README.md` |
 
 ---
 
@@ -100,11 +105,20 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 |----------|--------|-------|
 | Tenancy | `household_id` on all inventory rows | RLS by membership |
 | Categories | Seeded reference table | `consumable` vs `checklist` calc types |
+| Household bootstrap | `bootstrap_household()` RPC | `SECURITY DEFINER`; inserts `households` + `household_members` atomically — avoids RLS chicken-and-egg on first sign-in |
 | Days math | Pure functions in `shared/` (planned) | Testable without Supabase |
 | Profiles table | Defer | Auth users in `auth.users`; `household_members` links users |
-| Migration | `supabase/migrations/20260623120000_initial_schema.sql` | Apply via dashboard SQL or `supabase db push` |
+| Migrations | See list below | Applied in Supabase SQL Editor |
 
-### Tables (Phase 1)
+### Migrations (in order)
+
+| File | Purpose |
+|------|---------|
+| `20260623120000_initial_schema.sql` | Tables, RLS, category seed |
+| `20260623130000_household_one_per_user.sql` | Optional unique index on `household_members.user_id` |
+| `20260623140000_bootstrap_household_rpc.sql` | `bootstrap_household()` function |
+
+### Tables
 
 | Table | Purpose |
 |-------|---------|
@@ -133,5 +147,8 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | 2026-06 | Resend on `send.bereadysos.com`, not root domain |
 | 2026-06 | Replaced PKCE email links with `token_hash` + `/api/auth/confirm` after cross-tab / phone failures |
 | 2026-06 | Added `docs/BACKLOG.md` + `docs/DECISIONS.md` for session continuity |
-| 2026-06 | Logged future idea: shelter-in-place vs mobile scenarios + container tracking (“what items are where?”) |
+| 2026-06 | Logged future idea: shelter-in-place vs mobile scenarios + container tracking |
 | 2026-06 | Phase 1 database schema + RLS + category seed in `supabase/migrations/` |
+| 2026-06 | Phase 2: `/settings`, `useHousehold`, dashboard household summary |
+| 2026-06 | `bootstrap_household()` RPC — household create must not use client INSERT + SELECT (RLS) |
+| 2026-06 | Backlog: add pets to household (water/food planning) |

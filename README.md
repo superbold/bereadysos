@@ -13,7 +13,7 @@ A household disaster-preparedness planner. Track what you have, spot expiring su
 
 ## Current status
 
-Early development. Auth (sign up / sign in) and app shell are in place. Inventory, planning, and dashboard features are next.
+Auth, email confirmation, database (Phase 1), and household settings (Phase 2) are live. **Inventory (Phase 3)** is next.
 
 **Backlog & decisions:** [docs/BACKLOG.md](./docs/BACKLOG.md) · [docs/DECISIONS.md](./docs/DECISIONS.md)
 
@@ -21,14 +21,18 @@ Early development. Auth (sign up / sign in) and app shell are in place. Inventor
 
 ```
 app/
+├── composables/        # useHousehold, useAuthRedirectUrl
 ├── layouts/
 │   ├── auth.vue          # Sign-in / sign-up (standalone, mobile-first)
 │   ├── auth-confirm.vue  # Email confirmation callback (centered)
 │   └── default.vue       # Main app shell with navigation
 ├── pages/
 │   ├── auth/             # Login and signup
-│   ├── confirm.vue       # Supabase auth callback ("You're ready!")
-│   └── index.vue         # Dashboard (placeholder)
+│   ├── confirm.vue       # "You're ready!" after email confirm
+│   ├── index.vue         # Dashboard (household summary)
+│   └── settings.vue      # Household name, headcount, target days
+server/api/auth/          # token_hash email confirm endpoint
+supabase/migrations/      # SQL schema (apply in Supabase dashboard)
 ```
 
 ---
