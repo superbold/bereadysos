@@ -43,6 +43,7 @@ Living list of what’s shipped and what’s next. Update when a phase lands or 
 - [x] `useHousehold` composable + client plugin (auto-create on sign-in)
 - [x] `/settings` — name, headcount, target days (3/7/14/30/90 presets)
 - [x] Dashboard shows household summary
+- [x] `bootstrap_household` RPC migration applied (RLS fix)
 - [ ] **Apply migration** `20260623130000_household_one_per_user.sql` (optional but recommended)
 
 ---

@@ -32,6 +32,10 @@ In **Table Editor**, you should see:
 
 Run `migrations/20260623130000_household_one_per_user.sql` in SQL Editor to enforce one household per user.
 
+### Household bootstrap fix (required for Settings)
+
+Run `migrations/20260623140000_bootstrap_household_rpc.sql` — adds `bootstrap_household()` RPC so creating a household does not hit RLS chicken-and-egg on first sign-in.
+
 RLS is enabled on all four tables. `categories` is read-only for signed-in users.
 
 ## Regenerate TypeScript types

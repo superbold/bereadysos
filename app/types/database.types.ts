@@ -175,6 +175,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bootstrap_household: {
+        Args: { p_name?: string }
+        Returns: Database['public']['Tables']['households']['Row']
+      }
       is_household_member: {
         Args: { hid: string }
         Returns: boolean

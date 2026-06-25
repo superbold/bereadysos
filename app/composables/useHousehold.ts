@@ -61,35 +61,14 @@ export function useHousehold() {
     pending.value = true
     error.value = null
 
-    const { data: created, error: createError } = await supabase
-      .from('households')
-      .insert({ name: 'My Household' })
-      .select()
-      .single()
-
-    if (createError) {
-      pending.value = false
-      error.value = createError.message
-      return null
-    }
-
-    const { error: memberError } = await supabase
-      .from('household_members')
-      .insert({
-        household_id: created.id,
-        user_id: userId,
-        role: 'owner'
-      })
+    const { data: created, error: createError } = await supabase.rpc('bootstrap_household', {
+      p_name: 'My Household'
+    })
 
     pending.value = false
 
-    if (memberError) {
-      // Another tab may have created the household first
-      const raced = await fetchHousehold()
-      if (raced) {
-        return raced
-      }
-      error.value = memberError.message
+    if (createError) {
+      error.value = createError.message
       return null
     }
 
