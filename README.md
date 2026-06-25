@@ -15,6 +15,8 @@ A household disaster-preparedness planner. Track what you have, spot expiring su
 
 Early development. Auth (sign up / sign in) and app shell are in place. Inventory, planning, and dashboard features are next.
 
+**Backlog & decisions:** [docs/BACKLOG.md](./docs/BACKLOG.md) · [docs/DECISIONS.md](./docs/DECISIONS.md)
+
 ## Project structure
 
 ```
