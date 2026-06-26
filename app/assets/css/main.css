@@ -101,8 +101,14 @@
 
 .auth-shell__hero {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+}
+
+@media (min-width: 1024px) {
+  .auth-shell__hero {
+    align-items: center;
+  }
 }
 
 .auth-shell__hero-inner {
@@ -148,7 +154,118 @@
 }
 
 .auth-hero-showcase {
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  /* Fixed total height keeps the block stable while vertically centered */
+  height: 27.5rem;
+}
+
+@media (min-width: 1024px) {
+  .auth-hero-showcase {
+    height: 31.5rem;
+  }
+}
+
+.auth-hero-showcase__header {
+  flex-shrink: 0;
+}
+
+.auth-hero-showcase__headline-slot {
+  position: relative;
+  margin-top: 0.75rem;
+  min-height: calc(1 * 1.1 * clamp(1.75rem, 4vw, 2.75rem));
+}
+
+.auth-hero-showcase--finale .auth-hero-showcase__headline-slot {
+  min-height: calc(2 * 1.1 * clamp(1.75rem, 4vw, 2.75rem));
+}
+
+.auth-hero-showcase__headline-slot .auth-shell__headline {
+  margin-top: 0;
+}
+
+.auth-hero-showcase__headline {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition:
+    opacity 0.4s ease,
+    transform 0.4s ease;
+}
+
+.auth-hero-showcase__headline--active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.auth-hero-showcase__lede-slot {
+  flex-shrink: 0;
+  height: 0;
+  overflow: hidden;
+  transition: height 0.4s ease;
+}
+
+.auth-hero-showcase__lede-slot--visible {
+  height: 4.25rem;
+}
+
+@media (min-width: 1024px) {
+  .auth-hero-showcase__lede-slot--visible {
+    height: 4.5rem;
+  }
+}
+
+.auth-hero-showcase__lede {
+  margin-top: 0.75rem;
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition:
+    opacity 0.4s ease,
+    transform 0.4s ease;
+}
+
+.auth-hero-showcase__lede--active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.auth-hero-showcase__brand {
+  background: linear-gradient(
+    135deg,
+    var(--ui-color-primary-600) 0%,
+    var(--ui-color-primary-400) 55%,
+    var(--ui-color-primary-300) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.dark .auth-hero-showcase__brand {
+  background: linear-gradient(
+    135deg,
+    var(--ui-color-primary-400) 0%,
+    var(--ui-color-primary-300) 60%,
+    var(--color-green-200) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.auth-hero-showcase__step-label {
+  margin-bottom: 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-text-muted);
 }
 
 .auth-hero-showcase__caption {
@@ -173,19 +290,13 @@
   color: var(--ui-color-primary-400);
 }
 
-.auth-hero-showcase__lede {
-  margin-top: 0.75rem;
-}
-
 .auth-hero-showcase__stage {
-  margin-top: 1.25rem;
-  min-height: 15.5rem;
-}
-
-@media (min-width: 1024px) {
-  .auth-hero-showcase__stage {
-    min-height: 17.5rem;
-  }
+  flex: 1;
+  min-height: 0;
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .auth-hero-fade-enter-active,
@@ -211,6 +322,20 @@
   .auth-hero-fade-leave-to {
     opacity: 1;
     transform: none;
+  }
+
+  .auth-hero-showcase__headline,
+  .auth-hero-showcase__lede {
+    transition: none;
+    transform: none;
+  }
+
+  .auth-hero-showcase__lede-slot {
+    transition: none;
+  }
+
+  .auth-hero-showcase--finale .auth-hero-showcase__headline-slot {
+    min-height: calc(2 * 1.1 * clamp(1.75rem, 4vw, 2.75rem));
   }
 }
 
@@ -346,6 +471,19 @@
   opacity: 0.9;
 }
 
+.auth-demo__result-detail--fade {
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
+}
+
+.auth-demo__result-detail--fade.auth-demo__result-detail--visible {
+  opacity: 0.9;
+  transform: translateY(0);
+}
+
 @keyframes auth-demo-blink {
   0%,
   100% {
@@ -362,7 +500,8 @@
   }
 
   .auth-demo__field--fade,
-  .auth-demo__result--fade {
+  .auth-demo__result--fade,
+  .auth-demo__result-detail--fade {
     opacity: 1;
     transform: none;
     transition: none;
@@ -375,6 +514,11 @@
   margin-top: 0;
   list-style: none;
   padding: 0;
+}
+
+.auth-shell__feature--spotlight {
+  border-color: color-mix(in oklab, var(--ui-color-primary-500) 35%, transparent);
+  box-shadow: 0 0 24px color-mix(in oklab, var(--ui-color-primary-500) 12%, transparent);
 }
 
 .auth-shell__feature--glow {

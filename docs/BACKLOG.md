@@ -85,6 +85,7 @@ _MVP core phases complete. Pick from **Later** or promote an item when ready._
 
 ## Later
 
+- [ ] **Custom favicon** — replace default Nuxt `/favicon.ico` (see `app/app.vue` + `public/`); use BeReady SOS / shield-check branding
 - [ ] **Add pets to household** — track pets in settings; factor into water/food planning
 - [ ] **Scenarios & containers** — shelter-in-place vs mobile/evacuation; “what items are where?” (see `DECISIONS.md`)
 - [ ] Household invites / sharing

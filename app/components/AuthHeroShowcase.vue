@@ -1,5 +1,12 @@
 <script setup lang="ts">
-type Phase = 'inventory' | 'expiring' | 'plan' | 'finale'
+type Phase =
+  | 'inventory-card'
+  | 'inventory-demo'
+  | 'expiring-card'
+  | 'expiring-demo'
+  | 'plan-card'
+  | 'plan-demo'
+  | 'finale'
 
 const benefits = [
   {
@@ -25,53 +32,58 @@ const itemIcon = 'i-lucide-droplets'
 const itemQuantity = '5'
 const itemUnit = 'gallons'
 const itemExpiration = 'Sep 15, 2026'
+const expiringAlertLabel = 'Expires in 12 days'
+const expiringAlertDetail = 'Sep 15, 2026 · add a date when you log items'
 const resultLabel = 'Shortfall: need +2 gallons'
 const resultDetail = '5 of 7 gallons for 7 days'
 
-/** Extra hold time on each beat so readers can absorb the step */
+/** Pause on each benefit card before the matching demo */
+const CARD_INTRO_MS = 2200
+/** Extra hold on demo beats */
 const BEAT_HOLD_MS = 2000
+const TYPING_CHAR_MS = 50
+const FIELD_PAUSE_MS = 300
 
-const phase = ref<Phase>('inventory')
+type TypingField = 'name' | 'quantity' | 'expiration' | 'result' | null
+
+const phase = ref<Phase>('inventory-card')
 const typedName = ref('')
-const isTyping = ref(false)
+const typedQuantity = ref('')
+const typedExpiration = ref('')
+const typedResultLabel = ref('')
+const typingField = ref<TypingField>(null)
 const showCategory = ref(false)
-const showQuantity = ref(false)
-const showExpiration = ref(false)
-const showResult = ref(false)
+const showQuantityField = ref(false)
+const showExpirationField = ref(false)
+const showExpiringAlert = ref(false)
+const showResultPanel = ref(false)
+const showResultDetail = ref(false)
 const glowIndex = ref(-1)
 
 const reducedMotion = ref(false)
 let timeouts: ReturnType<typeof setTimeout>[] = []
 
-const headline = computed(() =>
-  phase.value === 'finale' ? 'Ready when it matters most' : 'It\'s Easy to BeReady!'
-)
+const isFinale = computed(() => phase.value === 'finale')
 
-const benefitCaption = computed(() => {
-  if (phase.value === 'inventory') {
-    return benefits[0]!.description
+const activeBenefitIndex = computed(() => {
+  if (phase.value.startsWith('inventory')) {
+    return 0
   }
-  if (phase.value === 'expiring') {
-    return benefits[1]!.description
+  if (phase.value.startsWith('expiring')) {
+    return 1
   }
-  if (phase.value === 'plan') {
-    return benefits[2]!.description
+  if (phase.value.startsWith('plan')) {
+    return 2
   }
-  return ''
+  return -1
 })
 
-const activeBenefitTitle = computed(() => {
-  if (phase.value === 'inventory') {
-    return benefits[0]!.title
-  }
-  if (phase.value === 'expiring') {
-    return benefits[1]!.title
-  }
-  if (phase.value === 'plan') {
-    return benefits[2]!.title
-  }
-  return ''
+const activeBenefit = computed(() => {
+  const index = activeBenefitIndex.value
+  return index >= 0 ? benefits[index] : null
 })
+
+const stageKey = computed(() => phase.value)
 
 function clearTimers() {
   for (const id of timeouts) {
@@ -86,70 +98,105 @@ function schedule(fn: () => void, ms: number) {
 
 function resetForm() {
   typedName.value = ''
-  isTyping.value = false
+  typedQuantity.value = ''
+  typedExpiration.value = ''
+  typedResultLabel.value = ''
+  typingField.value = null
   showCategory.value = false
-  showQuantity.value = false
-  showExpiration.value = false
-  showResult.value = false
+  showQuantityField.value = false
+  showExpirationField.value = false
+  showExpiringAlert.value = false
+  showResultPanel.value = false
+  showResultDetail.value = false
 }
 
-function fillForm() {
-  typedName.value = itemName
-  isTyping.value = false
-  showCategory.value = true
-  showQuantity.value = true
-}
+function typeText(
+  text: string,
+  apply: (value: string) => void,
+  field: TypingField,
+  startMs: number
+): number {
+  typingField.value = field
 
-function typeName(onComplete: () => void) {
-  isTyping.value = true
-  typedName.value = ''
-
-  itemName.split('').forEach((char, index) => {
+  text.split('').forEach((_, index) => {
     schedule(() => {
-      typedName.value += char
-      if (index === itemName.length - 1) {
-        isTyping.value = false
+      apply(text.slice(0, index + 1))
+      if (index === text.length - 1 && typingField.value === field) {
+        typingField.value = null
       }
-    }, index * 50)
+    }, startMs + index * TYPING_CHAR_MS)
   })
 
-  const afterName = itemName.length * 50 + 280
-  schedule(() => {
-    showCategory.value = true
-  }, afterName)
-  schedule(() => {
-    showQuantity.value = true
-  }, afterName + 380)
-  schedule(onComplete, afterName + 1100 + BEAT_HOLD_MS)
+  return startMs + text.length * TYPING_CHAR_MS
 }
 
-function runInventoryBeat(next: () => void) {
-  phase.value = 'inventory'
+function prefillItemFields() {
+  typedName.value = itemName
+  showCategory.value = true
+  showQuantityField.value = true
+  typedQuantity.value = `${itemQuantity} ${itemUnit}`
+}
+
+function showCardThenDemo(
+  cardPhase: Phase,
+  demoPhase: Phase,
+  runDemo: (next: () => void) => void,
+  next: () => void
+) {
+  phase.value = cardPhase
   glowIndex.value = -1
   resetForm()
-  typeName(next)
+
+  schedule(() => {
+    phase.value = demoPhase
+    runDemo(next)
+  }, CARD_INTRO_MS)
 }
 
-function runExpiringBeat(next: () => void) {
-  phase.value = 'expiring'
-  fillForm()
-  showExpiration.value = false
-  showResult.value = false
+function runInventoryDemo(next: () => void) {
+  let t = 0
+  t = typeText(itemName, value => typedName.value = value, 'name', t)
+  t += FIELD_PAUSE_MS
   schedule(() => {
-    showExpiration.value = true
-  }, 350)
-  schedule(next, 1800 + BEAT_HOLD_MS)
+    showCategory.value = true
+  }, t)
+  t += 400
+  schedule(() => {
+    showQuantityField.value = true
+  }, t)
+  t += 150
+  t = typeText(`${itemQuantity} ${itemUnit}`, value => typedQuantity.value = value, 'quantity', t)
+  schedule(next, t + FIELD_PAUSE_MS + BEAT_HOLD_MS)
 }
 
-function runPlanBeat(next: () => void) {
-  phase.value = 'plan'
-  fillForm()
-  showExpiration.value = true
-  showResult.value = false
+function runExpiringDemo(next: () => void) {
+  prefillItemFields()
+
+  let t = 450
   schedule(() => {
-    showResult.value = true
-  }, 450)
-  schedule(next, 2000 + BEAT_HOLD_MS)
+    showExpirationField.value = true
+  }, t)
+  t += 200
+  t = typeText(itemExpiration, value => typedExpiration.value = value, 'expiration', t)
+  schedule(() => {
+    showExpiringAlert.value = true
+  }, t + FIELD_PAUSE_MS)
+  schedule(next, t + FIELD_PAUSE_MS + 650 + BEAT_HOLD_MS)
+}
+
+function runPlanDemo(next: () => void) {
+  prefillItemFields()
+
+  let t = 450
+  schedule(() => {
+    showResultPanel.value = true
+  }, t)
+  t += 250
+  t = typeText(resultLabel, value => typedResultLabel.value = value, 'result', t)
+  schedule(() => {
+    showResultDetail.value = true
+  }, t + FIELD_PAUSE_MS)
+  schedule(next, t + FIELD_PAUSE_MS + 700 + BEAT_HOLD_MS)
 }
 
 function runFinaleBeat(next: () => void) {
@@ -170,17 +217,14 @@ function runFinaleBeat(next: () => void) {
 function runLoop() {
   if (reducedMotion.value) {
     phase.value = 'finale'
-    fillForm()
-    showExpiration.value = true
-    showResult.value = true
     glowIndex.value = 2
     return
   }
 
   clearTimers()
-  runInventoryBeat(() => {
-    runExpiringBeat(() => {
-      runPlanBeat(() => {
+  showCardThenDemo('inventory-card', 'inventory-demo', runInventoryDemo, () => {
+    showCardThenDemo('expiring-card', 'expiring-demo', runExpiringDemo, () => {
+      showCardThenDemo('plan-card', 'plan-demo', runPlanDemo, () => {
         runFinaleBeat(() => {
           runLoop()
         })
@@ -202,62 +246,89 @@ onUnmounted(() => {
 <template>
   <div
     class="auth-hero-showcase"
+    :class="{ 'auth-hero-showcase--finale': isFinale }"
     aria-hidden="true"
   >
-    <p class="auth-shell__eyebrow">
-      Disaster preparedness
-    </p>
-
-    <Transition
-      name="auth-hero-fade"
-      mode="out-in"
-    >
-      <h1
-        :key="headline"
-        class="auth-shell__headline"
-      >
-        {{ headline }}
-      </h1>
-    </Transition>
-
-    <Transition
-      name="auth-hero-fade"
-      mode="out-in"
-    >
-      <p
-        v-if="phase !== 'finale'"
-        :key="activeBenefitTitle"
-        class="auth-hero-showcase__caption"
-      >
-        <span class="auth-hero-showcase__caption-title">{{ activeBenefitTitle }}</span>
-        {{ benefitCaption }}
+    <div class="auth-hero-showcase__header">
+      <p class="auth-shell__eyebrow">
+        Disaster preparedness
       </p>
+
+      <div class="auth-hero-showcase__headline-slot">
+        <h1
+          class="auth-shell__headline auth-hero-showcase__headline"
+          :class="{ 'auth-hero-showcase__headline--active': !isFinale }"
+        >
+          It's Easy to <span class="auth-hero-showcase__brand">BeReady</span>!
+        </h1>
+        <h1
+          class="auth-shell__headline auth-hero-showcase__headline"
+          :class="{ 'auth-hero-showcase__headline--active': isFinale }"
+        >
+          <span class="auth-hero-showcase__brand">BeReady</span> when it matters most
+        </h1>
+      </div>
+    </div>
+
+    <div
+      class="auth-hero-showcase__lede-slot"
+      :class="{ 'auth-hero-showcase__lede-slot--visible': isFinale }"
+    >
       <p
-        v-else
-        key="finale-lede"
         class="auth-shell__lede auth-hero-showcase__lede"
+        :class="{ 'auth-hero-showcase__lede--active': isFinale }"
       >
         A calm, clear view of your supplies — whether you are planning for three days or three months.
       </p>
-    </Transition>
+    </div>
 
     <div class="auth-hero-showcase__stage">
       <Transition
         name="auth-hero-fade"
         mode="out-in"
       >
+        <!-- Benefit card: what it is -->
         <div
-          v-if="phase !== 'finale'"
-          key="demo"
+          v-if="activeBenefit && phase.endsWith('-card')"
+          :key="`${stageKey}-card`"
+        >
+          <p class="auth-hero-showcase__step-label">
+            What it is
+          </p>
+          <article class="auth-shell__feature auth-shell__feature--spotlight">
+            <span class="auth-shell__feature-icon">
+              <UIcon
+                :name="activeBenefit.icon"
+                class="size-5"
+              />
+            </span>
+            <div>
+              <p class="auth-shell__feature-title">
+                {{ activeBenefit.title }}
+              </p>
+              <p class="auth-shell__feature-copy">
+                {{ activeBenefit.description }}
+              </p>
+            </div>
+          </article>
+        </div>
+
+        <!-- Demo: what you do -->
+        <div
+          v-else-if="phase.endsWith('-demo')"
+          :key="`${stageKey}-demo`"
           class="auth-demo auth-demo--showcase"
         >
+          <p class="auth-hero-showcase__step-label">
+            What you do
+          </p>
           <div class="auth-demo__panel">
             <div class="auth-demo__form">
               <div class="auth-demo__field">
                 <span class="auth-demo__label">Item name</span>
                 <span class="auth-demo__value">
                   {{ typedName }}<span
-                    v-if="isTyping"
+                    v-if="typingField === 'name'"
                     class="auth-demo__cursor"
                   >|</span>
                 </span>
@@ -279,28 +350,55 @@ onUnmounted(() => {
 
               <div
                 class="auth-demo__field auth-demo__field--fade"
-                :class="{ 'auth-demo__field--visible': showQuantity }"
+                :class="{ 'auth-demo__field--visible': showQuantityField }"
               >
                 <span class="auth-demo__label">Quantity</span>
                 <span class="auth-demo__value">
-                  {{ itemQuantity }} {{ itemUnit }}
+                  {{ typedQuantity }}<span
+                    v-if="typingField === 'quantity'"
+                    class="auth-demo__cursor"
+                  >|</span>
                 </span>
               </div>
 
               <div
+                v-if="phase === 'expiring-demo'"
                 class="auth-demo__field auth-demo__field--fade"
-                :class="{ 'auth-demo__field--visible': showExpiration }"
+                :class="{ 'auth-demo__field--visible': showExpirationField }"
               >
                 <span class="auth-demo__label">Expiration date</span>
                 <span class="auth-demo__value">
-                  {{ itemExpiration }}
+                  {{ typedExpiration }}<span
+                    v-if="typingField === 'expiration'"
+                    class="auth-demo__cursor"
+                  >|</span>
                 </span>
               </div>
             </div>
 
             <div
+              v-if="phase === 'expiring-demo'"
               class="auth-demo__result auth-demo__result--fade auth-demo__result--warning"
-              :class="{ 'auth-demo__result--visible': showResult }"
+              :class="{ 'auth-demo__result--visible': showExpiringAlert }"
+            >
+              <UIcon
+                name="i-lucide-calendar-clock"
+                class="size-4 shrink-0"
+              />
+              <div class="min-w-0">
+                <p class="auth-demo__result-label">
+                  {{ expiringAlertLabel }}
+                </p>
+                <p class="auth-demo__result-detail">
+                  {{ expiringAlertDetail }}
+                </p>
+              </div>
+            </div>
+
+            <div
+              v-if="phase === 'plan-demo'"
+              class="auth-demo__result auth-demo__result--fade auth-demo__result--warning"
+              :class="{ 'auth-demo__result--visible': showResultPanel }"
             >
               <UIcon
                 name="i-lucide-trending-up"
@@ -308,9 +406,15 @@ onUnmounted(() => {
               />
               <div class="min-w-0">
                 <p class="auth-demo__result-label">
-                  {{ resultLabel }}
+                  {{ typedResultLabel }}<span
+                    v-if="typingField === 'result'"
+                    class="auth-demo__cursor"
+                  >|</span>
                 </p>
-                <p class="auth-demo__result-detail">
+                <p
+                  class="auth-demo__result-detail auth-demo__result-detail--fade"
+                  :class="{ 'auth-demo__result-detail--visible': showResultDetail }"
+                >
                   {{ resultDetail }}
                 </p>
               </div>
@@ -318,33 +422,35 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <ul
-          v-else
+        <!-- Finale: all three benefits -->
+        <div
+          v-else-if="isFinale"
           key="finale"
-          class="auth-shell__features auth-shell__features--showcase"
         >
-          <li
-            v-for="(item, index) in benefits"
-            :key="item.title"
-            class="auth-shell__feature"
-            :class="{ 'auth-shell__feature--glow': glowIndex === index }"
-          >
-            <span class="auth-shell__feature-icon">
-              <UIcon
-                :name="item.icon"
-                class="size-5"
-              />
-            </span>
-            <div>
-              <p class="auth-shell__feature-title">
-                {{ item.title }}
-              </p>
-              <p class="auth-shell__feature-copy">
-                {{ item.description }}
-              </p>
-            </div>
-          </li>
-        </ul>
+          <ul class="auth-shell__features auth-shell__features--showcase">
+            <li
+              v-for="(item, index) in benefits"
+              :key="item.title"
+              class="auth-shell__feature"
+              :class="{ 'auth-shell__feature--glow': glowIndex === index }"
+            >
+              <span class="auth-shell__feature-icon">
+                <UIcon
+                  :name="item.icon"
+                  class="size-5"
+                />
+              </span>
+              <div>
+                <p class="auth-shell__feature-title">
+                  {{ item.title }}
+                </p>
+                <p class="auth-shell__feature-copy">
+                  {{ item.description }}
+                </p>
+              </div>
+            </li>
+          </ul>
+        </div>
       </Transition>
     </div>
   </div>
