@@ -26,11 +26,11 @@ In **Table Editor**, you should see:
 | `categories` | 7 seeded rows (water, food, medical, …) |
 | `households` | Created when a user first visits the app (Phase 2) |
 | `household_members` | Links `auth.users` → household |
-| `items` | Empty until Phase 3 |
+| `items` | Household inventory (Phase 3 UI at `/inventory`) |
 
-### Phase 2 migration (optional)
+### Phase 2 migration (one household per user)
 
-Run `migrations/20260623130000_household_one_per_user.sql` in SQL Editor to enforce one household per user.
+Run `migrations/20260623130000_household_one_per_user.sql` in SQL Editor to enforce one household per user (unique index on `household_members.user_id`). Required for production; check for duplicate memberships before applying.
 
 ### Household bootstrap fix (required for Settings)
 

@@ -151,4 +151,4 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | 2026-06 | Phase 1 database schema + RLS + category seed in `supabase/migrations/` |
 | 2026-06 | Phase 2: `/settings`, `useHousehold`, dashboard household summary |
 | 2026-06 | `bootstrap_household()` RPC — household create must not use client INSERT + SELECT (RLS) |
-| 2026-06 | Backlog: add pets to household (water/food planning) |
+| 2026-06 | Phase 3: `/inventory` — CRUD, search/filter, `useInventory` composable |

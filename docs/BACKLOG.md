@@ -25,7 +25,7 @@ Living list of what’s shipped and what’s next. Update when a phase lands or 
 
 ### App shell
 - [x] Dashboard with household summary (`/`)
-- [x] Nav links (Inventory, Plan, Expiring, Settings) — inventory/plan/expiring pages not built yet
+- [x] Nav links (Inventory, Plan, Expiring, Settings) — plan/expiring pages not built yet
 - [x] Settings gear tooltip (“Settings” on hover)
 - [x] README with Vercel / Supabase / Resend flow
 
@@ -47,7 +47,14 @@ Living list of what’s shipped and what’s next. Update when a phase lands or 
 - [x] Dashboard shows household summary
 - [x] `bootstrap_household()` RPC — atomic household + member create (RLS fix)
 - [x] **Apply migration** `20260623140000_bootstrap_household_rpc.sql`
-- [ ] **Apply migration** `20260623130000_household_one_per_user.sql` (optional — one household per user)
+- [x] **Apply migration** `20260623130000_household_one_per_user.sql` (one household per user)
+
+---
+
+### Inventory (Phase 3) — complete
+- [x] `/inventory` — list, search, filter
+- [x] Add / edit / delete items (name, category, qty, unit, expiration, location, notes)
+- [x] Empty states + mobile-friendly forms (`useInventory`, `InventoryItemForm`, slideover)
 
 ---
 
@@ -58,11 +65,6 @@ _Nothing active — pick from **Next** below._
 ---
 
 ## Next
-
-### Phase 3 — Inventory
-- [ ] `/inventory` — list, search, filter
-- [ ] Add / edit / delete items (name, category, qty, unit, expiration, location, notes)
-- [ ] Empty states + mobile-friendly forms
 
 ### Phase 4 — Dashboard
 - [ ] Target-day presets (3 / 7 / 14 / 30 / 90) on dashboard
