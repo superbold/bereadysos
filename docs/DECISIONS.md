@@ -106,7 +106,7 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | Tenancy | `household_id` on all inventory rows | RLS by membership |
 | Categories | Seeded reference table | `consumable` vs `checklist` calc types |
 | Household bootstrap | `bootstrap_household()` RPC | `SECURITY DEFINER`; inserts `households` + `household_members` atomically — avoids RLS chicken-and-egg on first sign-in |
-| Days math | Pure functions in `shared/` (planned) | Testable without Supabase |
+| Days math | Pure functions in `shared/coverage.ts` | Testable via `pnpm test`; used on dashboard |
 | Profiles table | Defer | Auth users in `auth.users`; `household_members` links users |
 | Migrations | See list below | Applied in Supabase SQL Editor |
 
@@ -151,4 +151,5 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | 2026-06 | Phase 1 database schema + RLS + category seed in `supabase/migrations/` |
 | 2026-06 | Phase 2: `/settings`, `useHousehold`, dashboard household summary |
 | 2026-06 | `bootstrap_household()` RPC — household create must not use client INSERT + SELECT (RLS) |
-| 2026-06 | Phase 3: `/inventory` — CRUD, search/filter, `useInventory` composable |
+| 2026-06 | Phase 4: dashboard coverage, target-day presets, `shared/coverage.ts` + tests |
+| 2026-06 | `/expiring` — sortable expiration view (with Phase 4 quick links) |

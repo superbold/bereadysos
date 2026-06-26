@@ -9,6 +9,7 @@
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
     "typecheck": "nuxt typecheck",
+    "test": "node --experimental-strip-types --test test/**/*.test.ts",
     "db:types": "supabase gen types typescript --linked > app/types/database.types.ts"
   },
   "dependencies": {

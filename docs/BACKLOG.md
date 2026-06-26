@@ -25,7 +25,7 @@ Living list of what’s shipped and what’s next. Update when a phase lands or 
 
 ### App shell
 - [x] Dashboard with household summary (`/`)
-- [x] Nav links (Inventory, Plan, Expiring, Settings) — plan/expiring pages not built yet
+- [x] Nav links (Inventory, Plan, Expiring, Settings) — plan page not built yet
 - [x] Settings gear tooltip (“Settings” on hover)
 - [x] README with Vercel / Supabase / Resend flow
 
@@ -56,6 +56,15 @@ Living list of what’s shipped and what’s next. Update when a phase lands or 
 - [x] Add / edit / delete items (name, category, qty, unit, expiration, location, notes)
 - [x] Empty states + mobile-friendly forms (`useInventory`, `InventoryItemForm`, slideover)
 
+### Dashboard (Phase 4) — complete
+- [x] Target-day presets (3 / 7 / 14 / 30 / 90) on dashboard
+- [x] Coverage summary per category (water, food, checklist categories)
+- [x] Expiring-soon count + quick links
+- [x] `shared/coverage.ts` coverage math + `pnpm test` (Node test runner)
+
+### Expiring (Phase 5 — partial)
+- [x] `/expiring` — sortable expiration view (shipped with Phase 4 quick links)
+
 ---
 
 ## In progress
@@ -66,15 +75,8 @@ _Nothing active — pick from **Next** below._
 
 ## Next
 
-### Phase 4 — Dashboard
-- [ ] Target-day presets (3 / 7 / 14 / 30 / 90) on dashboard
-- [ ] Coverage summary per category (water, food, checklist categories)
-- [ ] Expiring-soon count + quick links
-- [ ] `shared/` coverage math (unit-testable pure functions)
-
-### Phase 5 — Plan & expiring
+### Phase 5 — Plan
 - [ ] `/plan` — gap list for selected target days (“need +12 gal water”)
-- [ ] `/expiring` — sortable expiration view
 
 ---
 
