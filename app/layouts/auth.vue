@@ -20,7 +20,10 @@ const highlights = [
 
 <template>
   <div class="auth-shell">
-    <div class="auth-shell__glow" aria-hidden="true" />
+    <div
+      class="auth-shell__glow"
+      aria-hidden="true"
+    />
 
     <header class="auth-shell__toolbar">
       <NuxtLink

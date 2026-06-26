@@ -14,21 +14,21 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2025-01-15',
 
-  supabase: {
-    redirect: true,
-    redirectOptions: {
-      login: '/auth/login',
-      callback: '/confirm',
-      exclude: ['/auth/login', '/auth/signup', '/confirm']
-    }
-  },
-
   eslint: {
     config: {
       stylistic: {
         commaDangle: 'never',
         braceStyle: '1tbs'
       }
+    }
+  },
+
+  supabase: {
+    redirect: true,
+    redirectOptions: {
+      login: '/auth/login',
+      callback: '/confirm',
+      exclude: ['/auth/login', '/auth/signup', '/confirm']
     }
   }
 })
