@@ -25,7 +25,7 @@ Living list of what’s shipped and what’s next. Update when a phase lands or 
 
 ### App shell
 - [x] Dashboard with household summary (`/`)
-- [x] Nav links (Inventory, Plan, Expiring, Settings) — plan page not built yet
+- [x] Nav links (Inventory, Plan, Expiring, Settings)
 - [x] Settings gear tooltip (“Settings” on hover)
 - [x] README with Vercel / Supabase / Resend flow
 
@@ -65,6 +65,10 @@ Living list of what’s shipped and what’s next. Update when a phase lands or 
 ### Expiring (Phase 5 — partial)
 - [x] `/expiring` — sortable expiration view (shipped with Phase 4 quick links)
 
+### Plan (Phase 5) — complete
+- [x] `/plan` — gap list for selected target days (“need +12 gal water”)
+- [x] `computeAllCategoryGaps`, `formatGapLabel` in `shared/coverage.ts` + tests
+
 ---
 
 ## In progress
@@ -75,8 +79,7 @@ _Nothing active — pick from **Next** below._
 
 ## Next
 
-### Phase 5 — Plan
-- [ ] `/plan` — gap list for selected target days (“need +12 gal water”)
+_MVP core phases complete. Pick from **Later** or promote an item when ready._
 
 ---
 

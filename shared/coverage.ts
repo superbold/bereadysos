@@ -52,6 +52,34 @@ export type ChecklistCategoryCoverage = {
 
 export type CategoryCoverage = ConsumableCategoryCoverage | ChecklistCategoryCoverage
 
+export type ConsumableCategoryGap = {
+  calc_type: 'consumable'
+  categoryId: string
+  slug: string
+  name: string
+  icon: string | null
+  unit: string
+  onHand: number
+  required: number
+  gap: number
+  surplus: number
+  isMet: boolean
+}
+
+export type ChecklistCategoryGap = {
+  calc_type: 'checklist'
+  categoryId: string
+  slug: string
+  name: string
+  icon: string | null
+  stockedCount: number
+  recommendedQty: number
+  gap: number
+  isMet: boolean
+}
+
+export type CategoryGap = ConsumableCategoryGap | ChecklistCategoryGap
+
 export type ExpiringItem = {
   id: string
   name: string
@@ -176,6 +204,86 @@ export function computeAllCategoryCoverage(
   return [...categories]
     .sort((a, b) => a.sort_order - b.sort_order)
     .map(category => computeCategoryCoverage(category, items, headcount, targetDays))
+}
+
+export function coverageToGap(coverage: CategoryCoverage): CategoryGap {
+  if (coverage.calc_type === 'consumable') {
+    const gap = Math.max(0, coverage.required - coverage.onHand)
+    return {
+      calc_type: 'consumable',
+      categoryId: coverage.categoryId,
+      slug: coverage.slug,
+      name: coverage.name,
+      icon: coverage.icon,
+      unit: coverage.unit,
+      onHand: coverage.onHand,
+      required: coverage.required,
+      gap,
+      surplus: Math.max(0, coverage.onHand - coverage.required),
+      isMet: gap === 0
+    }
+  }
+
+  const gap = Math.max(0, coverage.recommendedQty - coverage.stockedCount)
+  return {
+    calc_type: 'checklist',
+    categoryId: coverage.categoryId,
+    slug: coverage.slug,
+    name: coverage.name,
+    icon: coverage.icon,
+    stockedCount: coverage.stockedCount,
+    recommendedQty: coverage.recommendedQty,
+    gap,
+    isMet: gap === 0
+  }
+}
+
+export function computeAllCategoryGaps(
+  categories: CategoryForCoverage[],
+  items: ItemForCoverage[],
+  headcount: number,
+  targetDays: number
+): CategoryGap[] {
+  return computeAllCategoryCoverage(categories, items, headcount, targetDays)
+    .map(coverageToGap)
+}
+
+export function formatGapLabel(gap: CategoryGap): string {
+  if (gap.calc_type === 'consumable') {
+    if (!gap.isMet) {
+      return `Shortfall: need +${formatQuantity(gap.gap)} ${gap.unit}`
+    }
+    if (gap.surplus > 0) {
+      return `+${formatQuantity(gap.surplus)} ${gap.unit} above target`
+    }
+    return 'On target — no shortfall'
+  }
+
+  if (!gap.isMet) {
+    if (gap.stockedCount === 0) {
+      return 'Shortfall: add at least one item'
+    }
+    return `Shortfall: need ${gap.gap} more item${gap.gap === 1 ? '' : 's'}`
+  }
+
+  return 'On target — no shortfall'
+}
+
+export function formatGapDetail(gap: CategoryGap, targetDays: number): string {
+  if (gap.calc_type === 'consumable') {
+    const days = targetDays === 1 ? '1 day' : `${targetDays} days`
+    const amounts = `${formatQuantity(gap.onHand)} of ${formatQuantity(gap.required)} ${gap.unit} for ${days}`
+    if (!gap.isMet) {
+      return `Plan gap shortfall · ${amounts}`
+    }
+    return amounts
+  }
+
+  const stocked = `${gap.stockedCount} of ${gap.recommendedQty} essentials stocked`
+  if (!gap.isMet) {
+    return `Plan gap shortfall · ${stocked}`
+  }
+  return stocked
 }
 
 export function countExpiringSoon(

@@ -13,7 +13,7 @@ A household disaster-preparedness planner. Track what you have, spot expiring su
 
 ## Current status
 
-Auth, email confirmation, database (Phase 1), and household settings (Phase 2) are live. **Inventory (Phase 3)** is next.
+Auth, email confirmation, database, household settings, inventory, dashboard coverage, plan gaps, and expiring views are live.
 
 **Backlog & decisions:** [docs/BACKLOG.md](./docs/BACKLOG.md) · [docs/DECISIONS.md](./docs/DECISIONS.md)
 
@@ -29,7 +29,10 @@ app/
 ├── pages/
 │   ├── auth/             # Login and signup
 │   ├── confirm.vue       # "You're ready!" after email confirm
-│   ├── index.vue         # Dashboard (household summary)
+│   ├── index.vue         # Dashboard (coverage summary)
+│   ├── inventory.vue     # Inventory CRUD
+│   ├── plan.vue          # Gap list for target days
+│   ├── expiring.vue      # Expiration-sorted view
 │   └── settings.vue      # Household name, headcount, target days
 server/api/auth/          # token_hash email confirm endpoint
 supabase/migrations/      # SQL schema (apply in Supabase dashboard)
@@ -184,7 +187,7 @@ Open [http://localhost:3000](http://localhost:3000) — unauthenticated visits r
 
 Deploy via Vercel (connected to the GitHub repo). Set `NUXT_PUBLIC_SUPABASE_URL` and `NUXT_PUBLIC_SUPABASE_KEY` in Vercel before the first production deploy.
 
-Vercel uses the Node version from `package.json` `engines` (24). If the dashboard override differs, set **Project → Settings → General → Node.js Version** to **24.x** to match local and CI.
+Vercel uses the Node version from `package.json` `engines` (24). If the dashboard override differs, set **Project → Settings → Build and Deployment → Node.js Version** to **24.x** to match local and CI.
 
 ```bash
 pnpm build

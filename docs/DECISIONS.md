@@ -12,6 +12,7 @@ Short record of choices worth remembering across sessions. Add a dated entry whe
 | Primary domain | `bereadysos.com` | App on Vercel |
 | MVP scope | Inventory + expiration + days planning | Household sharing deferred past MVP |
 | Default target days | 7 (presets: 3/7/14/30/90) | Editable in `/settings` |
+| Plan gap / shortfall | User-facing terms for inventory below the chosen plan | Plan page, badges, auth hero |
 | Headcount | Single number per household | Named members later if needed |
 
 ---
@@ -153,4 +154,4 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | 2026-06 | Phase 2: `/settings`, `useHousehold`, dashboard household summary |
 | 2026-06 | `bootstrap_household()` RPC — household create must not use client INSERT + SELECT (RLS) |
 | 2026-06 | Phase 4: dashboard coverage, target-day presets, `shared/coverage.ts` + tests |
-| 2026-06 | Standardize on Node 24 (CI, `.nvmrc`, `package.json` engines) |
+| 2026-06 | Phase 5: `/plan` — gap list, `computeAllCategoryGaps`, `PlanGapCard` |

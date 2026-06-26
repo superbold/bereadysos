@@ -13,7 +13,7 @@ const highlights = [
   {
     icon: 'i-lucide-target',
     title: 'Plan for X days',
-    description: 'Set a target and see exactly what you still need.'
+    description: 'Set a target and discover plan gaps — shortfalls between your goal and what you have, like +12 gallons of water.'
   }
 ]
 </script>

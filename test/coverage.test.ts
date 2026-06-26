@@ -2,10 +2,14 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
   computeAllCategoryCoverage,
+  computeAllCategoryGaps,
   computeConsumableCoverage,
   countExpired,
   countExpiringSoon,
+  coverageToGap,
   effectiveConsumableAmount,
+  formatGapDetail,
+  formatGapLabel,
   listExpiringItems,
   TARGET_DAY_PRESETS
 } from '../shared/coverage.ts'
@@ -177,6 +181,50 @@ describe('expiration helpers', () => {
     assert.equal(listed.length, 1)
     assert.equal(listed[0]?.name, 'Soon')
     assert.equal(listed[0]?.daysUntil, 6)
+  })
+})
+
+describe('category gaps', () => {
+  it('reports consumable shortfall', () => {
+    const coverage = computeConsumableCoverage(water, [{
+      category_id: water.id,
+      quantity: 2,
+      volume_per_unit: null,
+      servings_per_unit: null,
+      expiration_date: null,
+      name: 'Stored water'
+    }], 2, 7)
+    const gap = coverageToGap(coverage)
+
+    assert.equal(gap.calc_type === 'consumable' && gap.gap, 12)
+    assert.equal(formatGapLabel(gap), 'Shortfall: need +12 gallons')
+    assert.equal(formatGapDetail(gap, 7), 'Plan gap shortfall · 2 of 14 gallons for 7 days')
+  })
+
+  it('marks met checklist categories', () => {
+    const gaps = computeAllCategoryGaps(
+      [medical],
+      [{
+        category_id: medical.id,
+        quantity: 1,
+        volume_per_unit: null,
+        servings_per_unit: null,
+        expiration_date: null,
+        name: 'First aid kit'
+      }],
+      1,
+      7
+    )
+
+    assert.equal(gaps[0]?.isMet, true)
+    assert.equal(formatGapLabel(gaps[0]!), 'On target — no shortfall')
+  })
+
+  it('flags empty checklist categories', () => {
+    const gaps = computeAllCategoryGaps([medical], [], 1, 7)
+
+    assert.equal(gaps[0]?.isMet, false)
+    assert.equal(formatGapLabel(gaps[0]!), 'Shortfall: add at least one item')
   })
 })
 

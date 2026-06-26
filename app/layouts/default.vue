@@ -4,7 +4,7 @@ const user = useSupabaseUser()
 const navItems = [
   { label: 'Dashboard', to: '/', icon: 'i-lucide-layout-dashboard' },
   { label: 'Inventory', to: '/inventory', icon: 'i-lucide-package' },
-  { label: 'Plan', to: '/plan', icon: 'i-lucide-clipboard-list' },
+  { label: 'Plan', to: '/plan', icon: 'i-lucide-clipboard-list', tooltip: 'Plan gaps and shortfalls' },
   { label: 'Expiring', to: '/expiring', icon: 'i-lucide-calendar-clock' }
 ]
 
@@ -34,17 +34,36 @@ async function signOut() {
           v-if="user"
           class="hidden items-center gap-1 md:flex"
         >
-          <UButton
+          <template
             v-for="item in navItems"
             :key="item.to"
-            :to="item.to"
-            :icon="item.icon"
-            color="neutral"
-            variant="ghost"
-            size="sm"
           >
-            {{ item.label }}
-          </UButton>
+            <UTooltip
+              v-if="item.tooltip"
+              :text="item.tooltip"
+            >
+              <UButton
+                :to="item.to"
+                :icon="item.icon"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                :aria-label="item.tooltip"
+              >
+                {{ item.label }}
+              </UButton>
+            </UTooltip>
+            <UButton
+              v-else
+              :to="item.to"
+              :icon="item.icon"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+            >
+              {{ item.label }}
+            </UButton>
+          </template>
         </nav>
       </template>
 
