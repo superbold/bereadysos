@@ -6,16 +6,7 @@
     />
 
     <header class="auth-shell__toolbar">
-      <NuxtLink
-        to="/"
-        class="flex items-center gap-2 rounded-lg px-2 py-1.5 font-semibold text-highlighted transition-colors hover:bg-elevated/60"
-      >
-        <UIcon
-          name="i-lucide-shield-check"
-          class="size-5 text-primary"
-        />
-        <span>BeReady SOS</span>
-      </NuxtLink>
+      <BeReadyBrandButton />
 
       <UColorModeButton />
     </header>
