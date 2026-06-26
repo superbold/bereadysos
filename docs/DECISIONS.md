@@ -59,6 +59,7 @@ For mobile readiness, users need **“What items are where?”** — not just to
 | Email delivery | Resend via Supabase SMTP | App does **not** call Resend API |
 | Hosting | Vercel | Env: `NUXT_PUBLIC_SUPABASE_URL`, `NUXT_PUBLIC_SUPABASE_KEY` only |
 | Package manager | pnpm | |
+| Node.js | **24** | `.nvmrc`, `package.json` engines, GitHub Actions CI; Vercel reads `engines` |
 | Migrations | `supabase/migrations/` in repo | Apply via SQL Editor; see `supabase/README.md` |
 
 ---
@@ -152,4 +153,4 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | 2026-06 | Phase 2: `/settings`, `useHousehold`, dashboard household summary |
 | 2026-06 | `bootstrap_household()` RPC — household create must not use client INSERT + SELECT (RLS) |
 | 2026-06 | Phase 4: dashboard coverage, target-day presets, `shared/coverage.ts` + tests |
-| 2026-06 | `/expiring` — sortable expiration view (with Phase 4 quick links) |
+| 2026-06 | Standardize on Node 24 (CI, `.nvmrc`, `package.json` engines) |

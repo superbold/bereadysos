@@ -161,7 +161,7 @@ You can style the HTML further; Resend delivers whatever Supabase sends.
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js **24** (see `.nvmrc`; `package.json` `engines` pins `>=24`)
 - pnpm
 - A [Supabase](https://supabase.com) project
 - [Resend](https://resend.com) account with `send.bereadysos.com` verified (for branded auth email)
@@ -184,10 +184,37 @@ Open [http://localhost:3000](http://localhost:3000) — unauthenticated visits r
 
 Deploy via Vercel (connected to the GitHub repo). Set `NUXT_PUBLIC_SUPABASE_URL` and `NUXT_PUBLIC_SUPABASE_KEY` in Vercel before the first production deploy.
 
+Vercel uses the Node version from `package.json` `engines` (24). If the dashboard override differs, set **Project → Settings → General → Node.js Version** to **24.x** to match local and CI.
+
 ```bash
 pnpm build
 pnpm preview   # local production preview only
 ```
+
+## Testing
+
+Quality checks run locally and on every **push** to GitHub via [Actions](.github/workflows/ci.yml).
+
+### Run locally
+
+```bash
+pnpm test        # unit tests (shared/coverage.ts)
+pnpm lint        # ESLint
+pnpm typecheck   # Nuxt / TypeScript
+```
+
+Coverage math lives in `shared/coverage.ts` with tests in `test/coverage.test.ts` — no Supabase or browser required.
+
+### CI on GitHub
+
+Each push triggers the **ci** workflow (Ubuntu, Node 24): install → test → lint → typecheck.
+
+| Where to look | What you see |
+|---------------|--------------|
+| **Actions** tab | Full log for each run |
+| Commit / PR checks | Green ✓ or red ✗ next to the latest push |
+
+Re-running an old failed workflow does not help unless that commit already includes the fix — push a new commit instead.
 
 ## License
 
