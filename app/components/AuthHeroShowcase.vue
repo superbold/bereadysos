@@ -1,12 +1,12 @@
 <script setup lang="ts">
-type Phase =
-  | 'inventory-card'
-  | 'inventory-demo'
-  | 'expiring-card'
-  | 'expiring-demo'
-  | 'plan-card'
-  | 'plan-demo'
-  | 'finale'
+type Phase
+  = 'inventory-card'
+    | 'inventory-demo'
+    | 'expiring-card'
+    | 'expiring-demo'
+    | 'plan-card'
+    | 'plan-demo'
+    | 'finale'
 
 const benefits = [
   {
