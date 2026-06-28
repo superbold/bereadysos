@@ -15,6 +15,7 @@ const signedUpEmail = ref('')
 const authRedirectUrl = useAuthRedirectUrl()
 
 const schema = z.object({
+  first_name: z.string().trim().min(1, 'First name is required').max(40),
   email: z.email('Enter a valid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string()
@@ -26,6 +27,13 @@ const schema = z.object({
 type Schema = z.output<typeof schema>
 
 const fields = [
+  {
+    name: 'first_name',
+    type: 'text' as const,
+    label: 'First name',
+    placeholder: 'Alex',
+    autocomplete: 'given-name'
+  },
   {
     name: 'email',
     type: 'email' as const,
@@ -62,7 +70,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     email: event.data.email,
     password: event.data.password,
     options: {
-      emailRedirectTo: authRedirectUrl.value
+      emailRedirectTo: authRedirectUrl.value,
+      data: {
+        first_name: event.data.first_name.trim()
+      }
     }
   })
 

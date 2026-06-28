@@ -19,16 +19,7 @@ async function signOut() {
   <div class="flex min-h-svh flex-col bg-default">
     <UHeader>
       <template #left>
-        <NuxtLink
-          to="/"
-          class="flex items-center gap-2 font-semibold text-highlighted"
-        >
-          <UIcon
-            name="i-lucide-shield-check"
-            class="size-5 text-primary"
-          />
-          <span class="hidden sm:inline">SOS Planner</span>
-        </NuxtLink>
+        <AppShellBrand />
 
         <nav
           v-if="user"

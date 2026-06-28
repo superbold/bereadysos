@@ -170,6 +170,27 @@ export type Database = {
           }
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          first_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          first_name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          first_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -178,6 +199,10 @@ export type Database = {
       bootstrap_household: {
         Args: { p_name?: string }
         Returns: Database['public']['Tables']['households']['Row']
+      }
+      ensure_profile: {
+        Args: { p_first_name?: string }
+        Returns: Database['public']['Tables']['profiles']['Row']
       }
       is_household_member: {
         Args: { hid: string }
@@ -299,4 +324,5 @@ export type Enums<
 export type Category = Tables<'categories'>
 export type Household = Tables<'households'>
 export type HouseholdMember = Tables<'household_members'>
+export type Profile = Tables<'profiles'>
 export type Item = Tables<'items'>

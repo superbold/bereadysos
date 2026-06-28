@@ -3,12 +3,14 @@ import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 const { household, pending, error: householdError, ensureHousehold, updateHousehold } = useHousehold()
+const { profile, fetchProfile, updateProfile } = useProfile()
 const toast = useToast()
 const saving = ref(false)
 
 const targetPresets = [3, 7, 14, 30, 90]
 
 const schema = z.object({
+  first_name: z.string().trim().min(1, 'First name is required').max(40),
   name: z.string().trim().min(1, 'Name is required').max(80),
   headcount: z.coerce.number().int().min(1, 'At least 1 person').max(50),
   target_days: z.coerce.number().int().min(1).max(365)
@@ -17,6 +19,7 @@ const schema = z.object({
 type Schema = z.output<typeof schema>
 
 const state = reactive<Schema>({
+  first_name: '',
   name: 'My Household',
   headcount: 1,
   target_days: 7
@@ -30,9 +33,18 @@ watch(household, (value) => {
   }
 }, { immediate: true })
 
+watch(profile, (value) => {
+  if (value) {
+    state.first_name = value.first_name
+  }
+}, { immediate: true })
+
 onMounted(async () => {
   if (!household.value) {
     await ensureHousehold()
+  }
+  if (!profile.value) {
+    await fetchProfile()
   }
 })
 
@@ -42,6 +54,21 @@ function applyTargetDays(days: number) {
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   saving.value = true
+
+  const { error: profileError } = await updateProfile({
+    first_name: event.data.first_name
+  })
+
+  if (profileError) {
+    saving.value = false
+    toast.add({
+      title: 'Could not save profile',
+      description: profileError.message,
+      color: 'error',
+      icon: 'i-lucide-circle-alert'
+    })
+    return
+  }
 
   const { error } = await updateHousehold({
     name: event.data.name,
@@ -111,6 +138,18 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       class="space-y-6"
       @submit="onSubmit"
     >
+      <UFormField
+        label="Your first name"
+        name="first_name"
+        description="Shown at the top of the app, e.g. “Alex's plan”."
+      >
+        <UInput
+          v-model="state.first_name"
+          placeholder="Alex"
+          autocomplete="given-name"
+        />
+      </UFormField>
+
       <UFormField
         label="Household name"
         name="name"

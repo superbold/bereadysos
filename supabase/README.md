@@ -36,7 +36,11 @@ Run `migrations/20260623130000_household_one_per_user.sql` in SQL Editor to enfo
 
 Run `migrations/20260623140000_bootstrap_household_rpc.sql` — adds `bootstrap_household()` RPC so creating a household does not hit RLS chicken-and-egg on first sign-in.
 
-RLS is enabled on all four tables. `categories` is read-only for signed-in users.
+### Profiles (owner display name)
+
+Run `migrations/20260625120000_profiles.sql` — adds `profiles` (`first_name`) and `ensure_profile()` RPC. Used in the app header (“Alex's plan”) and for future household invites.
+
+RLS is enabled on all tables. `categories` is read-only for signed-in users.
 
 ## Regenerate TypeScript types
 
@@ -53,8 +57,9 @@ Or manually keep `app/types/database.types.ts` in sync with migrations.
 ```
 households
 ├── headcount, target_days, name
-└── household_members (user_id, role: owner|member)
-    └── items → categories
+├── household_members (user_id, role: owner|member)
+│   └── items → categories
+profiles (user_id, first_name) — display name per auth user
 ```
 
 **Consumable categories** (water, food): days-of-supply math via `default_daily_per_person`.  

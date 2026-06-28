@@ -48,6 +48,22 @@ For mobile readiness, users need **“What items are where?”** — not just to
 
 **Relation to MVP:** Phase 3 inventory may add a simple `location` text field first; full container/scenario model is a later layer on top.
 
+### Household invites (planned)
+
+**Status:** Backlog. Owner display name shipped in header; `household_members.role` already has `owner` \| `member`.
+
+**Goal:** Owner invites a guest to view and suggest improvements on the preparedness plan. Owner can revoke access (“dis-invite”).
+
+**Likely model when built:**
+- `household_invites` — email, token, status, invited_by, expires_at
+- Guest accepts → `household_members` row with `role = 'member'` (read/suggest; owner-only settings)
+- Header shows **owner's** plan name for guests (`useHouseholdPlan` already fetches owner profile)
+- Settings: invite list + revoke for owners only
+
+See **Later** in `docs/BACKLOG.md`.
+
+---
+
 ### Global alerts panel
 
 **Status:** Shipped. Auth hero stays motivational only — no real preparedness warnings before sign-in.
@@ -157,7 +173,7 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | Categories | Seeded reference table | `consumable` vs `checklist` calc types |
 | Household bootstrap | `bootstrap_household()` RPC | `SECURITY DEFINER`; inserts `households` + `household_members` atomically — avoids RLS chicken-and-egg on first sign-in |
 | Days math | Pure functions in `shared/coverage.ts` | Testable via `pnpm test`; used on dashboard |
-| Profiles table | Defer | Auth users in `auth.users`; `household_members` links users |
+| Profiles table | `profiles.first_name` | Shown in header as “{name}'s plan”; signup + settings |
 | Migrations | See list below | Applied in Supabase SQL Editor |
 
 ### Migrations (in order)
@@ -167,6 +183,7 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | `20260623120000_initial_schema.sql` | Tables, RLS, category seed |
 | `20260623130000_household_one_per_user.sql` | Optional unique index on `household_members.user_id` |
 | `20260623140000_bootstrap_household_rpc.sql` | `bootstrap_household()` function |
+| `20260625120000_profiles.sql` | `profiles`, `ensure_profile()` |
 
 ### Tables
 
@@ -174,6 +191,7 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 |-------|---------|
 | `households` | `name`, `headcount`, `target_days` |
 | `household_members` | `user_id`, `role` (`owner` \| `member`) |
+| `profiles` | `user_id`, `first_name` — peers in same household can read (for invites) |
 | `categories` | Seeded; `slug`, `calc_type`, defaults for days math |
 | `items` | Inventory lines; optional `location` (containers later) |
 
