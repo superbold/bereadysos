@@ -28,7 +28,7 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/auth/login',
       callback: '/confirm',
-      exclude: ['/auth/login', '/auth/signup', '/confirm']
+      exclude: ['/auth/login', '/auth/signup', '/confirm', '/invite/accept']
     }
   }
 })

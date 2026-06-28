@@ -1,17 +1,23 @@
 import type { Database, Household, TablesUpdate } from '~/types/database.types'
 
 type HouseholdRow = Household
+type MemberRole = Database['public']['Enums']['member_role']
 
 export function useHousehold() {
   const supabase = useSupabaseClient<Database>()
   const user = useSupabaseUser()
 
   const household = useState<HouseholdRow | null>('household', () => null)
+  const membershipRole = useState<MemberRole | null>('household-membership-role', () => null)
   const pending = useState('household-pending', () => false)
   const error = useState<string | null>('household-error', () => null)
 
+  const isHouseholdOwner = computed(() => membershipRole.value === 'owner')
+  const isHouseholdGuest = computed(() => membershipRole.value === 'member')
+
   function clearHousehold() {
     household.value = null
+    membershipRole.value = null
     error.value = null
   }
 
@@ -25,22 +31,49 @@ export function useHousehold() {
     pending.value = true
     error.value = null
 
-    const { data, error: fetchError } = await supabase
+    const { data: ownerRow, error: ownerError } = await supabase
       .from('household_members')
-      .select('households(*)')
+      .select('role, households(*)')
       .eq('user_id', userId)
+      .eq('role', 'owner')
+      .maybeSingle()
+
+    if (ownerError) {
+      pending.value = false
+      error.value = ownerError.message
+      return null
+    }
+
+    if (ownerRow?.households) {
+      membershipRole.value = 'owner'
+      household.value = ownerRow.households as HouseholdRow
+      pending.value = false
+      return household.value
+    }
+
+    const { data: memberRow, error: memberError } = await supabase
+      .from('household_members')
+      .select('role, households(*)')
+      .eq('user_id', userId)
+      .eq('role', 'member')
       .maybeSingle()
 
     pending.value = false
 
-    if (fetchError) {
-      error.value = fetchError.message
+    if (memberError) {
+      error.value = memberError.message
       return null
     }
 
-    const row = data?.households as HouseholdRow | null
-    household.value = row
-    return row
+    if (memberRow?.households) {
+      membershipRole.value = 'member'
+      household.value = memberRow.households as HouseholdRow
+      return household.value
+    }
+
+    membershipRole.value = null
+    household.value = null
+    return null
   }
 
   async function ensureHousehold() {
@@ -72,13 +105,14 @@ export function useHousehold() {
       return null
     }
 
+    membershipRole.value = 'owner'
     household.value = created
     return created
   }
 
   async function updateHousehold(updates: TablesUpdate<'households'>) {
-    if (!household.value?.id) {
-      return { data: null, error: new Error('No household loaded') }
+    if (!household.value?.id || !isHouseholdOwner.value) {
+      return { data: null, error: new Error('Only the plan owner can update household settings') }
     }
 
     const { data, error: updateError } = await supabase
@@ -98,6 +132,9 @@ export function useHousehold() {
 
   return {
     household,
+    membershipRole,
+    isHouseholdOwner,
+    isHouseholdGuest,
     pending,
     error,
     fetchHousehold,

@@ -75,10 +75,11 @@ Living list of what’s shipped and what’s next. Update when a phase lands or 
 - [x] Header bell + badge count + slideover (`AlertsBell.vue`); icon, severity color, title + detail per row
 - [x] Auth hero unchanged (no real warnings before sign-in)
 
-### Owner display name — complete
-- [x] `profiles` table + `ensure_profile()` RPC (`20260625120000_profiles.sql`)
-- [x] First name on signup + settings; header shows “{name}'s plan” (`AppShellBrand.vue`)
-- [x] `useProfile`, `useHouseholdPlan` — owner name ready for invited guests later
+### Household invites — complete
+- [x] `household_invites` migration + RPCs (create, cancel, accept, revoke, preview)
+- [x] Settings **Household sharing** section (owner): invite link, pending list, guest list, remove
+- [x] `/invite/accept?token=…` accept flow; login redirect support
+- [x] Guest role: shared plan access; owner-only household settings
 
 ---
 
@@ -99,7 +100,7 @@ _MVP core phases complete. Pick from **Later** or promote an item when ready._
 - [ ] **Custom favicon** — replace default Nuxt `/favicon.ico` (see `app/app.vue` + `public/`); use BeReady SOS / shield-check branding
 - [ ] **Add pets to household** — track pets in settings; factor into water/food planning
 - [ ] **Scenarios & containers** — shelter-in-place vs mobile/evacuation; “what items are where?” (see `DECISIONS.md`)
-- [ ] **Household invites** — owner invites guest by email; guest sees “{owner}'s plan”; owner can revoke (`member` role exists; see `DECISIONS.md`)
+- [ ] **Invite email delivery** — send invite links via Resend instead of copy/paste only
 - [ ] Starter templates (72-hour kit, earthquake, winter storm)
 - [ ] Branded HTML email template in Supabase (beyond plain link)
 - [ ] CSV import / export shopping list

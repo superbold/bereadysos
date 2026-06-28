@@ -48,19 +48,21 @@ For mobile readiness, users need **“What items are where?”** — not just to
 
 **Relation to MVP:** Phase 3 inventory may add a simple `location` text field first; full container/scenario model is a later layer on top.
 
-### Household invites (planned)
+### Household invites
 
-**Status:** Backlog. Owner display name shipped in header; `household_members.role` already has `owner` \| `member`.
+**Status:** Shipped. Copy-link invites (email delivery later). Owner manages sharing in Settings.
 
-**Goal:** Owner invites a guest to view and suggest improvements on the preparedness plan. Owner can revoke access (“dis-invite”).
+**Flow:**
+1. Owner enters guest email → **Create invite link** (copied to clipboard)
+2. Guest opens `/invite/accept?token=…` → signs in with that email → **Accept invite**
+3. Guest becomes `member`; header shows owner’s “{name}'s plan”
+4. Owner can **Cancel** pending invites or **Remove** guests
 
-**Likely model when built:**
-- `household_invites` — email, token, status, invited_by, expires_at
-- Guest accepts → `household_members` row with `role = 'member'` (read/suggest; owner-only settings)
-- Header shows **owner's** plan name for guests (`useHouseholdPlan` already fetches owner profile)
-- Settings: invite list + revoke for owners only
-
-See **Later** in `docs/BACKLOG.md`.
+**Rules (MVP):**
+- One owned household per user; one guest membership per user
+- Guest must sign in with the invited email
+- Accepting removes an empty default household (no inventory); users with existing inventory must keep their own plan
+- Guests can edit inventory; only owners change targets and sharing
 
 ---
 
@@ -184,6 +186,7 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | `20260623130000_household_one_per_user.sql` | Optional unique index on `household_members.user_id` |
 | `20260623140000_bootstrap_household_rpc.sql` | `bootstrap_household()` function |
 | `20260625120000_profiles.sql` | `profiles`, `ensure_profile()` |
+| `20260625140000_household_invites.sql` | Invites, guest membership, sharing RPCs |
 
 ### Tables
 
@@ -222,3 +225,4 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | 2026-06 | Phase 4: dashboard coverage, target-day presets, `shared/coverage.ts` + tests |
 | 2026-06 | Phase 5: `/plan` — gap list, `computeAllCategoryGaps`, `PlanGapCard` |
 | 2026-06 | Global alerts panel shipped — bell + badge + slideover; `shared/alerts.ts`, `useAlerts`, `AlertsBell.vue` |
+| 2026-06 | Household invites — Settings sharing section, accept page, guest `member` role |

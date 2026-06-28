@@ -40,6 +40,8 @@ Run `migrations/20260623140000_bootstrap_household_rpc.sql` — adds `bootstrap_
 
 Run `migrations/20260625120000_profiles.sql` — adds `profiles` (`first_name`) and `ensure_profile()` RPC. Used in the app header (“Alex's plan”) and for future household invites.
 
+Run `migrations/20260625140000_household_invites.sql` — adds `household_invites`, guest membership rules, and sharing RPCs for Settings → Household sharing.
+
 RLS is enabled on all tables. `categories` is read-only for signed-in users.
 
 ## Regenerate TypeScript types

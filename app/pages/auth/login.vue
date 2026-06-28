@@ -8,8 +8,17 @@ definePageMeta({
 
 const supabase = useSupabaseClient()
 const session = useSupabaseSession()
+const route = useRoute()
 const toast = useToast()
 const loading = ref(false)
+
+const redirectTo = computed(() => {
+  const redirect = route.query.redirect
+  if (typeof redirect === 'string' && redirect.startsWith('/')) {
+    return redirect
+  }
+  return '/'
+})
 
 const schema = z.object({
   email: z.email('Enter a valid email address'),
@@ -37,7 +46,7 @@ const fields = [
 
 watch(session, (value) => {
   if (value) {
-    navigateTo('/', { external: true })
+    navigateTo(redirectTo.value, { external: true })
   }
 }, { immediate: true })
 
@@ -61,7 +70,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     return
   }
 
-  await navigateTo('/', { external: true })
+  await navigateTo(redirectTo.value, { external: true })
 }
 </script>
 
@@ -80,7 +89,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         <p>
           New here?
           <NuxtLink
-            to="/auth/signup"
+            :to="`/auth/signup${route.query.redirect ? `?redirect=${encodeURIComponent(String(route.query.redirect))}` : ''}`"
             class="font-medium text-primary hover:underline"
           >
             Create an account

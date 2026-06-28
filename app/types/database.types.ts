@@ -191,6 +191,53 @@ export type Database = {
         }
         Relationships: []
       }
+      household_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          created_at: string
+          expires_at: string
+          household_id: string
+          id: string
+          invited_by: string
+          invited_email: string
+          status: Database['public']['Enums']['invite_status']
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          expires_at?: string
+          household_id: string
+          id?: string
+          invited_by: string
+          invited_email: string
+          status?: Database['public']['Enums']['invite_status']
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          created_at?: string
+          expires_at?: string
+          household_id?: string
+          id?: string
+          invited_by?: string
+          invited_email?: string
+          status?: Database['public']['Enums']['invite_status']
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'household_invites_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -204,6 +251,32 @@ export type Database = {
         Args: { p_first_name?: string }
         Returns: Database['public']['Tables']['profiles']['Row']
       }
+      create_household_invite: {
+        Args: { p_email: string }
+        Returns: Database['public']['Tables']['household_invites']['Row']
+      }
+      cancel_household_invite: {
+        Args: { p_invite_id: string }
+        Returns: undefined
+      }
+      revoke_household_member: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      preview_household_invite: {
+        Args: { p_token: string }
+        Returns: {
+          household_name: string
+          inviter_first_name: string
+          invited_email: string
+          expires_at: string
+          is_valid: boolean
+        }[]
+      }
+      accept_household_invite: {
+        Args: { p_token: string }
+        Returns: Database['public']['Tables']['households']['Row']
+      }
       is_household_member: {
         Args: { hid: string }
         Returns: boolean
@@ -215,6 +288,7 @@ export type Database = {
     }
     Enums: {
       calc_type: 'consumable' | 'checklist'
+      invite_status: 'pending' | 'accepted' | 'revoked' | 'expired'
       member_role: 'owner' | 'member'
     }
     CompositeTypes: {
@@ -324,5 +398,8 @@ export type Enums<
 export type Category = Tables<'categories'>
 export type Household = Tables<'households'>
 export type HouseholdMember = Tables<'household_members'>
+export type HouseholdInvite = Tables<'household_invites'>
 export type Profile = Tables<'profiles'>
+export type MemberRole = Database['public']['Enums']['member_role']
+export type InviteStatus = Database['public']['Enums']['invite_status']
 export type Item = Tables<'items'>
