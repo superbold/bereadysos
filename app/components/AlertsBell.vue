@@ -4,6 +4,12 @@ import type { AlertSeverity } from '#shared/alerts'
 const open = ref(false)
 const { groupedAlerts, alertCount, hasAlerts, loadAlerts } = useAlerts()
 
+const hasErrorAlerts = computed(() =>
+  groupedAlerts.value.some(group => group.alerts.some(alert => alert.severity === 'error'))
+)
+
+const badgeLabel = computed(() => (alertCount.value > 9 ? '9+' : String(alertCount.value)))
+
 onMounted(() => {
   loadAlerts()
 })
@@ -22,22 +28,23 @@ function onAlertClick() {
 <template>
   <div>
     <UTooltip text="Needs attention">
-      <div class="relative">
+      <div class="alerts-bell">
         <UButton
           icon="i-lucide-bell"
           color="neutral"
           variant="ghost"
-          aria-label="Needs attention"
+          :aria-label="hasAlerts ? `Needs attention, ${alertCount} alert${alertCount === 1 ? '' : 's'}` : 'Needs attention'"
           :aria-expanded="open"
           @click="open = true"
         />
-        <UBadge
+        <span
           v-if="hasAlerts"
-          :label="String(alertCount)"
-          :color="groupedAlerts.some(group => group.alerts.some(alert => alert.severity === 'error')) ? 'error' : 'warning'"
-          size="sm"
           class="alerts-bell__badge"
-        />
+          :class="hasErrorAlerts ? 'alerts-bell__badge--error' : 'alerts-bell__badge--warning'"
+          aria-hidden="true"
+        >
+          {{ badgeLabel }}
+        </span>
       </div>
     </UTooltip>
 
