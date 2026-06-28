@@ -4,9 +4,9 @@ import {
   computeAlerts,
   computeExpirationAlerts,
   computePlanGapAlerts,
-  groupAlerts
-} from '../shared/alerts.ts'
-import type { CategoryGap } from '../shared/coverage.ts'
+  groupAlerts,
+  type CategoryGap
+} from '../shared/coverage.ts'
 
 const water = {
   id: 'water-id',
