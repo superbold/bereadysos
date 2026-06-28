@@ -71,6 +71,8 @@ async function signOut() {
         <UColorModeButton />
 
         <template v-if="user">
+          <AlertsBell />
+
           <UTooltip text="Settings">
             <UButton
               to="/settings"

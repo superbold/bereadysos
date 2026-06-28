@@ -48,6 +48,54 @@ For mobile readiness, users need **“What items are where?”** — not just to
 
 **Relation to MVP:** Phase 3 inventory may add a simple `location` text field first; full container/scenario model is a later layer on top.
 
+### Global alerts panel
+
+**Status:** Shipped. Auth hero stays motivational only — no real preparedness warnings before sign-in.
+
+**Goal:** One calm, actionable inbox for signed-in users — aggregate what already exists on Dashboard, Plan, and Expiring without duplicating fear on the landing page.
+
+**Display:** Header **bell** with **numeric badge** (no sheen animation). Click opens a **slideover** (not a modal or auto-popup). Rows grouped by family; each row links to `/expiring`, `/plan`, or `/`.
+
+**Warning design (3 properties, like a stop sign):**
+
+| Property | Implementation |
+|----------|----------------|
+| **Shape** | Lucide icon in a rounded square per alert |
+| **Color** | `error` (red) or `warning` (amber) — badge uses worst severity present |
+| **Text** | `title` + `detail` on each row |
+
+**What to aggregate (3 families):**
+
+| Family | Source (existing) | Example copy |
+|--------|-------------------|--------------|
+| **Expiration** | `countExpired`, `countExpiringSoon`, `listExpiringItems` in `shared/coverage.ts` | “2 expired · 3 expiring within 30 days” |
+| **Plan gaps** | `computeAllCategoryGaps` → open gaps, `formatGapLabel` | “Water: shortfall +2 gallons” |
+| **Coverage** | `coverageStatus` on dashboard cards | “Medical: needs attention” — only when it adds signal beyond plan gaps (e.g. checklist categories) |
+
+**Severity (reuse today’s tokens):**
+
+| Level | When |
+|-------|------|
+| `error` | Expired items; critical coverage (&lt;50%); consumable plan gap with zero on hand |
+| `warning` | Expiring within 30 days; low coverage (50–99%); plan gap shortfall with some stock |
+
+**Out of scope for this panel:**
+
+- System/load errors (`UAlert` on pages) — stay page-local
+- Auth hero demo warnings — illustrative only; do **not** wire to real alert types (avoid fear before signup)
+
+**Tone:** Factual and actionable (“Review 2 expired items”), not alarmist. Same red/amber semantics as today, softer framing.
+
+**Proposed architecture:**
+
+1. **`shared/alerts.ts`** — `computeAlerts()` → `AppAlert[]` with `kind`, `severity`, `icon`, `title`, `detail`, `href`
+2. **`useAlerts()`** — composable on `useHousehold` + `useInventory`
+3. **`AlertsBell.vue`** — bell + badge + slideover in `default.vue` layout
+
+**Suggested build order:** _(done)_
+
+See also **Later** in `docs/BACKLOG.md`.
+
 ---
 
 ## Stack
@@ -155,3 +203,4 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | 2026-06 | `bootstrap_household()` RPC — household create must not use client INSERT + SELECT (RLS) |
 | 2026-06 | Phase 4: dashboard coverage, target-day presets, `shared/coverage.ts` + tests |
 | 2026-06 | Phase 5: `/plan` — gap list, `computeAllCategoryGaps`, `PlanGapCard` |
+| 2026-06 | Global alerts panel shipped — bell + badge + slideover; `shared/alerts.ts`, `useAlerts`, `AlertsBell.vue` |

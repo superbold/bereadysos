@@ -69,6 +69,12 @@ Living list of what’s shipped and what’s next. Update when a phase lands or 
 - [x] `/plan` — gap list for selected target days (“need +12 gal water”)
 - [x] `computeAllCategoryGaps`, `formatGapLabel` in `shared/coverage.ts` + tests
 
+### Global alerts panel — complete
+- [x] `shared/alerts.ts` + `test/alerts.test.ts` — expiration, plan gaps, coverage (when not duplicated)
+- [x] `useAlerts` composable
+- [x] Header bell + badge count + slideover (`AlertsBell.vue`); icon, severity color, title + detail per row
+- [x] Auth hero unchanged (no real warnings before sign-in)
+
 ---
 
 ## In progress

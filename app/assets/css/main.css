@@ -717,3 +717,31 @@
     opacity: 1;
   }
 }
+
+/* Global alerts panel — icon (shape), severity (color), title + detail (text) */
+.alerts-bell__badge {
+  pointer-events: none;
+  position: absolute;
+  top: 0.125rem;
+  right: 0.125rem;
+  min-width: 1.125rem;
+  justify-content: center;
+}
+
+.alerts-panel__icon--error {
+  background: color-mix(in oklab, var(--ui-color-error-500) 12%, var(--ui-bg-elevated));
+  color: var(--ui-color-error-600);
+}
+
+.dark .alerts-panel__icon--error {
+  color: var(--ui-color-error-400);
+}
+
+.alerts-panel__icon--warning {
+  background: color-mix(in oklab, var(--ui-color-warning-500) 12%, var(--ui-bg-elevated));
+  color: var(--ui-color-warning-700);
+}
+
+.dark .alerts-panel__icon--warning {
+  color: var(--ui-color-warning-400);
+}
