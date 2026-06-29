@@ -1,7 +1,15 @@
 import type { Database, Household, TablesUpdate } from '~/types/database.types'
+import {
+  canEditInventory as roleCanEditInventory,
+  canManageHouseholdSettings,
+  isCollaboratorOnPlan,
+  isReadOnlyCollaborator
+} from '#shared/household-roles'
 
 type HouseholdRow = Household
 type MemberRole = Database['public']['Enums']['member_role']
+
+const COLLABORATOR_ROLES: MemberRole[] = ['maintainer', 'member', 'shopper', 'watcher']
 
 export function useHousehold() {
   const supabase = useSupabaseClient<Database>()
@@ -13,7 +21,15 @@ export function useHousehold() {
   const error = useState<string | null>('household-error', () => null)
 
   const isHouseholdOwner = computed(() => membershipRole.value === 'owner')
-  const isHouseholdGuest = computed(() => membershipRole.value === 'member')
+  const isHouseholdGuest = computed(() => isCollaboratorOnPlan(membershipRole.value))
+  const isInventoryKeeper = computed(() =>
+    membershipRole.value === 'maintainer' || membershipRole.value === 'member'
+  )
+  const isShopper = computed(() => membershipRole.value === 'shopper')
+  const isWatcher = computed(() => membershipRole.value === 'watcher')
+  const isReadOnlyOnPlan = computed(() => isReadOnlyCollaborator(membershipRole.value))
+  const canEditInventory = computed(() => roleCanEditInventory(membershipRole.value))
+  const canManageSettings = computed(() => canManageHouseholdSettings(membershipRole.value))
 
   function clearHousehold() {
     household.value = null
@@ -51,23 +67,25 @@ export function useHousehold() {
       return household.value
     }
 
-    const { data: memberRow, error: memberError } = await supabase
+    const { data: collaboratorRows, error: collaboratorError } = await supabase
       .from('household_members')
       .select('role, households(*)')
       .eq('user_id', userId)
-      .eq('role', 'member')
-      .maybeSingle()
+      .in('role', COLLABORATOR_ROLES)
+      .order('created_at', { ascending: true })
+      .limit(1)
 
     pending.value = false
 
-    if (memberError) {
-      error.value = memberError.message
+    if (collaboratorError) {
+      error.value = collaboratorError.message
       return null
     }
 
-    if (memberRow?.households) {
-      membershipRole.value = 'member'
-      household.value = memberRow.households as HouseholdRow
+    const collaboratorRow = collaboratorRows?.[0]
+    if (collaboratorRow?.households) {
+      membershipRole.value = collaboratorRow.role
+      household.value = collaboratorRow.households as HouseholdRow
       return household.value
     }
 
@@ -111,7 +129,7 @@ export function useHousehold() {
   }
 
   async function updateHousehold(updates: TablesUpdate<'households'>) {
-    if (!household.value?.id || !isHouseholdOwner.value) {
+    if (!household.value?.id || !canManageSettings.value) {
       return { data: null, error: new Error('Only the plan owner can update household settings') }
     }
 
@@ -135,6 +153,12 @@ export function useHousehold() {
     membershipRole,
     isHouseholdOwner,
     isHouseholdGuest,
+    isInventoryKeeper,
+    isShopper,
+    isWatcher,
+    isReadOnlyOnPlan,
+    canEditInventory,
+    canManageSettings,
     pending,
     error,
     fetchHousehold,

@@ -2,7 +2,7 @@
 import type { ItemWithCategory } from '~/composables/useInventory'
 
 const toast = useToast()
-const { household, pending: householdPending, ensureHousehold } = useHousehold()
+const { household, pending: householdPending, ensureHousehold, canEditInventory, isReadOnlyOnPlan } = useHousehold()
 const {
   categories,
   items,
@@ -211,6 +211,7 @@ function closeDeleteModal() {
         </p>
       </div>
       <UButton
+        v-if="canEditInventory"
         label="Add item"
         icon="i-lucide-plus"
         class="shrink-0"
@@ -243,6 +244,16 @@ function closeDeleteModal() {
     />
 
     <template v-else-if="household">
+      <UAlert
+        v-if="isReadOnlyOnPlan"
+        color="primary"
+        icon="i-lucide-eye"
+        title="Read-only access"
+        description="You can view this inventory but cannot add or edit items."
+        variant="subtle"
+        class="mb-6"
+      />
+
       <div
         v-if="items.length"
         class="mb-6 flex flex-col gap-3 sm:flex-row"
@@ -275,6 +286,7 @@ function closeDeleteModal() {
           Start building your preparedness inventory — add water, food, first aid, and other essentials.
         </p>
         <UButton
+          v-if="canEditInventory"
           label="Add your first item"
           icon="i-lucide-plus"
           class="mt-6"
@@ -366,7 +378,10 @@ function closeDeleteModal() {
             </p>
           </div>
 
-          <div class="flex shrink-0 gap-1">
+          <div
+            v-if="canEditInventory"
+            class="flex shrink-0 gap-1"
+          >
             <UButton
               icon="i-lucide-pencil"
               color="neutral"

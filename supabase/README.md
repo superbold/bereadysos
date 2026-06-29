@@ -42,6 +42,10 @@ Run `migrations/20260625120000_profiles.sql` — adds `profiles` (`first_name`) 
 
 Run `migrations/20260625140000_household_invites.sql` — adds `household_invites`, guest membership rules, and sharing RPCs for Settings → Household sharing.
 
+Run `migrations/20260625160000_household_coordination_enum.sql` first — adds `maintainer`, `shopper`, `watcher` to `member_role` (must run in its own transaction).
+
+Run `migrations/20260625160100_household_coordination.sql` second — roles migration, Restock (`shop_runs`), read-only RLS. **Apply after** the enum step and household invites migration.
+
 RLS is enabled on all tables. `categories` is read-only for signed-in users.
 
 ## Regenerate TypeScript types
@@ -59,8 +63,9 @@ Or manually keep `app/types/database.types.ts` in sync with migrations.
 ```
 households
 ├── headcount, target_days, name
-├── household_members (user_id, role: owner|member)
+├── household_members (user_id, role: owner|maintainer|shopper|watcher)
 │   └── items → categories
+├── shop_runs → shop_run_lines (Restock workflow)
 profiles (user_id, first_name) — display name per auth user
 ```
 

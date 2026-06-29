@@ -58,11 +58,30 @@ For mobile readiness, users need **“What items are where?”** — not just to
 3. Guest becomes `member`; header shows owner’s “{name}'s plan”
 4. Owner can **Cancel** pending invites or **Remove** guests
 
-**Rules (MVP):**
-- One owned household per user; one guest membership per user
-- Guest must sign in with the invited email
-- Accepting removes an empty default household (no inventory); users with existing inventory must keep their own plan
-- Guests can edit inventory; only owners change targets and sharing
+**Rules:**
+- One owned household per user
+- One inventory-keeper or shopper slot on another plan; one watcher slot on another plan
+- Maintainer/shopper accept: empty owned household removed; users with inventory must use **Watcher** invite
+- Inventory keeper can edit inventory; shopper/watcher read-only; only owner changes targets and sharing
+
+### Household coordination (Restock)
+
+**Status:** Phase A in progress. Internal name: **household coordination**; user-facing nav: **Restock**.
+
+| DB role | UI label | Inventory |
+|---------|----------|-----------|
+| `owner` | Plan owner | CRUD + settings |
+| `maintainer` | Inventory keeper | CRUD |
+| `shopper` | Shopper | Read-only |
+| `watcher` | Watcher | Read-only (keeps own plan) |
+
+**Phase A:** Owner creates restock run from plan gaps → sends to shopper → shopper marks complete → awaiting intake banner.
+
+**Phase B (later):** `intake_pending` workflow; maintainer logs items explicitly.
+
+**Phase C (later):** Owner reconcile split view — **Accept** / **Send back** / **Accept inventory**.
+
+**Not yet:** Watcher suggestions, household switcher, activity feed.
 
 ---
 
@@ -187,16 +206,19 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | `20260623140000_bootstrap_household_rpc.sql` | `bootstrap_household()` function |
 | `20260625120000_profiles.sql` | `profiles`, `ensure_profile()` |
 | `20260625140000_household_invites.sql` | Invites, guest membership, sharing RPCs |
+| `20260625160000_household_coordination_enum.sql` | `member_role` enum: maintainer, shopper, watcher (run alone first) |
+| `20260625160100_household_coordination.sql` | Roles migration, shop runs, Restock |
 
 ### Tables
 
 | Table | Purpose |
 |-------|---------|
 | `households` | `name`, `headcount`, `target_days` |
-| `household_members` | `user_id`, `role` (`owner` \| `member`) |
+| `household_members` | `user_id`, `role` (`owner` \| `maintainer` \| `shopper` \| `watcher`; legacy `member`) |
 | `profiles` | `user_id`, `first_name` — peers in same household can read (for invites) |
 | `categories` | Seeded; `slug`, `calc_type`, defaults for days math |
 | `items` | Inventory lines; optional `location` (containers later) |
+| `shop_runs` / `shop_run_lines` | Restock workflow — shopping list + status |
 
 ---
 
@@ -226,3 +248,4 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | 2026-06 | Phase 5: `/plan` — gap list, `computeAllCategoryGaps`, `PlanGapCard` |
 | 2026-06 | Global alerts panel shipped — bell + badge + slideover; `shared/alerts.ts`, `useAlerts`, `AlertsBell.vue` |
 | 2026-06 | Household invites — Settings sharing section, accept page, guest `member` role |
+| 2026-06 | Household coordination Phase A — Restock nav, roles (inventory keeper / shopper / watcher), shop runs |

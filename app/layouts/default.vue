@@ -5,6 +5,7 @@ const navItems = [
   { label: 'Dashboard', to: '/', icon: 'i-lucide-layout-dashboard' },
   { label: 'Inventory', to: '/inventory', icon: 'i-lucide-package' },
   { label: 'Plan', to: '/plan', icon: 'i-lucide-clipboard-list', tooltip: 'Plan gaps and shortfalls' },
+  { label: 'Restock', to: '/restock', icon: 'i-lucide-shopping-cart' },
   { label: 'Expiring', to: '/expiring', icon: 'i-lucide-calendar-clock' }
 ]
 

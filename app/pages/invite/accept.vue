@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { roleLabel } from '#shared/household-roles'
+
 const route = useRoute()
 const user = useSupabaseUser()
 const toast = useToast()
@@ -15,6 +17,7 @@ const preview = ref<{
   household_name: string
   inviter_first_name: string
   invited_email: string
+  invited_role: string
   expires_at: string
   is_valid: boolean
 } | null>(null)
@@ -136,7 +139,9 @@ const loginUrl = computed(() =>
         Join {{ preview.inviter_first_name }}&rsquo;s plan
       </h1>
       <p class="mt-2 text-sm text-muted">
-        You&rsquo;ve been invited to help with
+        You&rsquo;ve been invited as
+        <span class="font-medium text-highlighted">{{ roleLabel(preview.invited_role as 'maintainer') }}</span>
+        on
         <span class="font-medium text-highlighted">{{ preview.household_name }}</span>.
         Sign in as
         <span class="font-medium text-highlighted">{{ preview.invited_email }}</span>

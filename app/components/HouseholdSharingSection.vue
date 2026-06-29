@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { INVITE_ROLE_OPTIONS, roleLabel } from '#shared/household-roles'
+import type { InviteableRole } from '#shared/household-roles'
 
 const toast = useToast()
 const {
@@ -15,24 +17,38 @@ const {
 } = useHouseholdSharing()
 
 const inviteSchema = z.object({
-  email: z.email('Enter a valid email address')
+  email: z.email('Enter a valid email address'),
+  role: z.enum(['maintainer', 'shopper', 'watcher'])
 })
 
 type InviteSchema = z.output<typeof inviteSchema>
 
 const inviteState = reactive<InviteSchema>({
-  email: ''
+  email: '',
+  role: 'maintainer'
 })
 
-const guestMembers = computed(() => members.value.filter(member => member.role === 'member'))
+const inviteRoleOptions = INVITE_ROLE_OPTIONS.map(option => ({
+  label: option.label,
+  value: option.value,
+  description: option.description
+}))
+
 const ownerMember = computed(() => members.value.find(member => member.role === 'owner'))
+const collaboratorMembers = computed(() =>
+  members.value.filter(member => member.role !== 'owner')
+)
+
+function inviteRoleLabel(role: string) {
+  return roleLabel(role as InviteableRole | 'owner' | 'member')
+}
 
 async function onInviteSubmit(event: FormSubmitEvent<InviteSchema>) {
-  const { data, error } = await createInvite(event.data.email)
+  const { data, error } = await createInvite(event.data.email, event.data.role)
 
   if (error) {
     toast.add({
-      title: 'Could not send invite',
+      title: 'Could not create invite',
       description: error.message,
       color: 'error',
       icon: 'i-lucide-circle-alert'
@@ -46,8 +62,8 @@ async function onInviteSubmit(event: FormSubmitEvent<InviteSchema>) {
   toast.add({
     title: 'Invite created',
     description: copied.error
-      ? 'Share the invite link with your guest from the list below.'
-      : 'Invite link copied to your clipboard — send it to your guest.',
+      ? `Share the link with your ${inviteRoleLabel(event.data.role).toLowerCase()} from the list below.`
+      : `Invite link copied — send it to your ${inviteRoleLabel(event.data.role).toLowerCase()}.`,
     color: 'success',
     icon: 'i-lucide-user-plus'
   })
@@ -67,7 +83,7 @@ async function onCopyLink(token: string) {
 
   toast.add({
     title: 'Link copied',
-    description: 'Send it to your guest by email or message.',
+    description: 'Send it by email or message.',
     color: 'success',
     icon: 'i-lucide-clipboard-check'
   })
@@ -96,7 +112,7 @@ async function onRevokeMember(userId: string, firstName: string) {
   const { error } = await revokeMember(userId)
   if (error) {
     toast.add({
-      title: 'Could not remove guest',
+      title: 'Could not remove person',
       description: error.message,
       color: 'error',
       icon: 'i-lucide-circle-alert'
@@ -105,7 +121,7 @@ async function onRevokeMember(userId: string, firstName: string) {
   }
 
   toast.add({
-    title: 'Guest removed',
+    title: 'Access removed',
     description: `${firstName} no longer has access to this plan.`,
     color: 'neutral',
     icon: 'i-lucide-user-minus'
@@ -128,7 +144,7 @@ function formatInviteExpiry(expiresAt: string) {
         Household sharing
       </h2>
       <p class="mt-1 text-sm text-muted">
-        Invite someone to view and help improve this preparedness plan. You can remove guests at any time.
+        Invite an inventory keeper, shopper, or watcher. Each role has different access to your plan.
       </p>
     </div>
 
@@ -139,17 +155,34 @@ function formatInviteExpiry(expiresAt: string) {
       @submit="onInviteSubmit"
     >
       <UFormField
-        label="Guest email"
+        label="Email"
         name="email"
         description="They must sign in with this email to accept."
       >
         <UInput
           v-model="inviteState.email"
           type="email"
-          placeholder="guest@example.com"
+          placeholder="alex@example.com"
           autocomplete="email"
         />
       </UFormField>
+
+      <UFormField
+        label="Role"
+        name="role"
+      >
+        <USelect
+          v-model="inviteState.role"
+          :items="inviteRoleOptions"
+          value-key="value"
+          label-key="label"
+          class="w-full"
+        />
+        <p class="mt-1 text-sm text-muted">
+          {{ inviteRoleOptions.find(option => option.value === inviteState.role)?.description }}
+        </p>
+      </UFormField>
+
       <UButton
         type="submit"
         label="Create invite link"
@@ -186,6 +219,8 @@ function formatInviteExpiry(expiresAt: string) {
                 {{ invite.invited_email }}
               </p>
               <p class="text-sm text-muted">
+                {{ inviteRoleLabel(invite.invited_role) }}
+                &middot;
                 Expires {{ formatInviteExpiry(invite.expires_at) }}
               </p>
             </div>
@@ -225,7 +260,7 @@ function formatInviteExpiry(expiresAt: string) {
                 {{ ownerMember.first_name }}
               </p>
               <p class="text-sm text-muted">
-                Owner
+                Plan owner
               </p>
             </div>
             <UBadge
@@ -237,7 +272,7 @@ function formatInviteExpiry(expiresAt: string) {
             </UBadge>
           </li>
           <li
-            v-for="member in guestMembers"
+            v-for="member in collaboratorMembers"
             :key="member.user_id"
             class="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between"
           >
@@ -246,7 +281,7 @@ function formatInviteExpiry(expiresAt: string) {
                 {{ member.first_name }}
               </p>
               <p class="text-sm text-muted">
-                Guest
+                {{ inviteRoleLabel(member.role) }}
               </p>
             </div>
             <UButton
@@ -259,10 +294,10 @@ function formatInviteExpiry(expiresAt: string) {
             />
           </li>
           <li
-            v-if="!guestMembers.length"
+            v-if="!collaboratorMembers.length"
             class="p-3 text-sm text-muted"
           >
-            No guests yet — create an invite link above.
+            No collaborators yet — create an invite link above.
           </li>
         </ul>
       </div>

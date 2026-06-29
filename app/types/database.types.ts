@@ -201,6 +201,7 @@ export type Database = {
           id: string
           invited_by: string
           invited_email: string
+          invited_role: Database['public']['Enums']['member_role']
           status: Database['public']['Enums']['invite_status']
           token: string
         }
@@ -213,6 +214,7 @@ export type Database = {
           id?: string
           invited_by: string
           invited_email: string
+          invited_role?: Database['public']['Enums']['member_role']
           status?: Database['public']['Enums']['invite_status']
           token?: string
         }
@@ -225,12 +227,107 @@ export type Database = {
           id?: string
           invited_by?: string
           invited_email?: string
+          invited_role?: Database['public']['Enums']['member_role']
           status?: Database['public']['Enums']['invite_status']
           token?: string
         }
         Relationships: [
           {
             foreignKeyName: 'household_invites_household_id_fkey'
+            columns: ['household_id']
+            isOneToOne: false
+            referencedRelation: 'households'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      shop_run_lines: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          id: string
+          line_status: Database['public']['Enums']['shop_run_line_status']
+          name: string
+          quantity_planned: number | null
+          quantity_reported: number | null
+          shop_run_id: string
+          shopper_note: string | null
+          sort_order: number
+          unit: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          line_status?: Database['public']['Enums']['shop_run_line_status']
+          name: string
+          quantity_planned?: number | null
+          quantity_reported?: number | null
+          shop_run_id: string
+          shopper_note?: string | null
+          sort_order?: number
+          unit?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          id?: string
+          line_status?: Database['public']['Enums']['shop_run_line_status']
+          name?: string
+          quantity_planned?: number | null
+          quantity_reported?: number | null
+          shop_run_id?: string
+          shopper_note?: string | null
+          sort_order?: number
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'shop_run_lines_shop_run_id_fkey'
+            columns: ['shop_run_id']
+            isOneToOne: false
+            referencedRelation: 'shop_runs'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      shop_runs: {
+        Row: {
+          created_at: string
+          created_by: string
+          household_id: string
+          id: string
+          shopper_user_id: string | null
+          shopping_note: string | null
+          status: Database['public']['Enums']['shop_run_status']
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          household_id: string
+          id?: string
+          shopper_user_id?: string | null
+          shopping_note?: string | null
+          status?: Database['public']['Enums']['shop_run_status']
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          household_id?: string
+          id?: string
+          shopper_user_id?: string | null
+          shopping_note?: string | null
+          status?: Database['public']['Enums']['shop_run_status']
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'shop_runs_household_id_fkey'
             columns: ['household_id']
             isOneToOne: false
             referencedRelation: 'households'
@@ -252,7 +349,7 @@ export type Database = {
         Returns: Database['public']['Tables']['profiles']['Row']
       }
       create_household_invite: {
-        Args: { p_email: string }
+        Args: { p_email: string, p_role?: Database['public']['Enums']['member_role'] }
         Returns: Database['public']['Tables']['household_invites']['Row']
       }
       cancel_household_invite: {
@@ -269,6 +366,7 @@ export type Database = {
           household_name: string
           inviter_first_name: string
           invited_email: string
+          invited_role: Database['public']['Enums']['member_role']
           expires_at: string
           is_valid: boolean
         }[]
@@ -285,11 +383,39 @@ export type Database = {
         Args: { hid: string }
         Returns: boolean
       }
+      can_edit_inventory: {
+        Args: { hid: string }
+        Returns: boolean
+      }
+      create_shop_run: {
+        Args: { p_title?: string }
+        Returns: Database['public']['Tables']['shop_runs']['Row']
+      }
+      add_shop_run_line: {
+        Args: {
+          p_run_id: string
+          p_name: string
+          p_category_id?: string
+          p_quantity?: number
+          p_unit?: string
+        }
+        Returns: Database['public']['Tables']['shop_run_lines']['Row']
+      }
+      start_shop_run: {
+        Args: { p_run_id: string, p_shopper_user_id?: string }
+        Returns: Database['public']['Tables']['shop_runs']['Row']
+      }
+      complete_shop_run_shopping: {
+        Args: { p_run_id: string, p_note?: string }
+        Returns: Database['public']['Tables']['shop_runs']['Row']
+      }
     }
     Enums: {
       calc_type: 'consumable' | 'checklist'
       invite_status: 'pending' | 'accepted' | 'revoked' | 'expired'
-      member_role: 'owner' | 'member'
+      member_role: 'owner' | 'member' | 'maintainer' | 'shopper' | 'watcher'
+      shop_run_line_status: 'pending' | 'bought' | 'skipped' | 'substituted'
+      shop_run_status: 'draft' | 'shopping' | 'shopping_complete' | 'intake_pending' | 'closed'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -399,6 +525,8 @@ export type Category = Tables<'categories'>
 export type Household = Tables<'households'>
 export type HouseholdMember = Tables<'household_members'>
 export type HouseholdInvite = Tables<'household_invites'>
+export type ShopRun = Tables<'shop_runs'>
+export type ShopRunLine = Tables<'shop_run_lines'>
 export type Profile = Tables<'profiles'>
 export type MemberRole = Database['public']['Enums']['member_role']
 export type InviteStatus = Database['public']['Enums']['invite_status']

@@ -1,4 +1,6 @@
 import type { Database, HouseholdInvite } from '~/types/database.types'
+import type { InviteableRole } from '#shared/household-roles'
+import { roleLabel } from '#shared/household-roles'
 
 export type HouseholdMemberRow = {
   user_id: string
@@ -54,7 +56,7 @@ export function useHouseholdSharing() {
 
     if (membersResult.error) {
       toast.add({
-        title: 'Could not load members',
+        title: 'Could not load people',
         description: membersResult.error.message,
         color: 'error',
         icon: 'i-lucide-circle-alert'
@@ -90,14 +92,15 @@ export function useHouseholdSharing() {
     return `/invite/accept?token=${token}`
   }
 
-  async function createInvite(email: string) {
+  async function createInvite(email: string, role: InviteableRole = 'maintainer') {
     if (!isHouseholdOwner.value) {
-      return { data: null, error: new Error('Only the plan owner can invite guests') }
+      return { data: null, error: new Error('Only the plan owner can invite people') }
     }
 
     inviting.value = true
     const { data, error } = await supabase.rpc('create_household_invite', {
-      p_email: email.trim()
+      p_email: email.trim(),
+      p_role: role
     })
     inviting.value = false
 
@@ -159,6 +162,7 @@ export function useHouseholdSharing() {
     sharingPending,
     inviting,
     membershipRole,
+    roleLabel,
     loadSharing,
     createInvite,
     cancelInvite,

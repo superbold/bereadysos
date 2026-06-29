@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { roleLabel } from '#shared/household-roles'
 
-const { household, pending, error: householdError, ensureHousehold, updateHousehold, isHouseholdOwner, isHouseholdGuest } = useHousehold()
+const { household, pending, error: householdError, ensureHousehold, updateHousehold, isHouseholdOwner, isHouseholdGuest, membershipRole, canManageSettings } = useHousehold()
 const { profile, fetchProfile, updateProfile } = useProfile()
 const toast = useToast()
 const saving = ref(false)
@@ -153,8 +154,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         v-if="isHouseholdGuest"
         color="primary"
         icon="i-lucide-users"
-        title="You are a guest on this plan"
-        description="You can update your first name and help with inventory, but only the owner can change household targets or manage sharing."
+        :title="`You are the ${roleLabel(membershipRole).toLowerCase()} on this plan`"
+        :description="canManageSettings
+          ? ''
+          : membershipRole === 'shopper' || membershipRole === 'watcher'
+            ? 'You can view the plan and inventory. Use Restock when it is time to shop.'
+            : 'You can update inventory and your first name. Only the plan owner changes targets and sharing.'"
         variant="subtle"
       />
 
@@ -179,7 +184,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           v-model="state.name"
           placeholder="My Household"
           autocomplete="organization"
-          :disabled="isHouseholdGuest"
+          :disabled="!canManageSettings"
         />
       </UFormField>
 
@@ -193,7 +198,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           type="number"
           min="1"
           max="50"
-          :disabled="isHouseholdGuest"
+          :disabled="!canManageSettings"
         />
       </UFormField>
 
@@ -208,7 +213,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           min="1"
           max="365"
           class="mb-3"
-          :disabled="isHouseholdGuest"
+          :disabled="!canManageSettings"
         />
         <div class="flex flex-wrap gap-2">
           <UButton
@@ -219,7 +224,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             :color="state.target_days === days ? 'primary' : 'neutral'"
             :variant="state.target_days === days ? 'soft' : 'outline'"
             type="button"
-            :disabled="isHouseholdGuest"
+            :disabled="!canManageSettings"
             @click="applyTargetDays(days)"
           />
         </div>
@@ -227,7 +232,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
       <UButton
         type="submit"
-        :label="isHouseholdGuest ? 'Save profile' : 'Save settings'"
+        :label="canManageSettings ? 'Save settings' : 'Save profile'"
         block
         :loading="saving"
         trailing-icon="i-lucide-check"
