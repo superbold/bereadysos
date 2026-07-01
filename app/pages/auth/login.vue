@@ -20,6 +20,12 @@ const redirectTo = computed(() => {
   return '/'
 })
 
+onMounted(() => {
+  if (redirectTo.value !== '/') {
+    setPostAuthRedirect(redirectTo.value)
+  }
+})
+
 const schema = z.object({
   email: z.email('Enter a valid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters')

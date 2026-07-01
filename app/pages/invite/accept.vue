@@ -6,6 +6,12 @@ const user = useSupabaseUser()
 const toast = useToast()
 const { previewInvite, acceptInvite } = useHouseholdInviteAccept()
 
+onMounted(() => {
+  if (route.fullPath.startsWith('/invite/accept')) {
+    setPostAuthRedirect(route.fullPath)
+  }
+})
+
 const token = computed(() => {
   const value = route.query.token
   return typeof value === 'string' ? value : ''

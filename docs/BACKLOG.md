@@ -106,6 +106,7 @@ _Phase A coordination in progress — see **In progress** above._
 
 ## Later
 
+- [ ] **Internal admin / support tools** — view users & households, revoke memberships, resend/cancel invites, delete test accounts (replace manual Supabase SQL); admin-only auth, not public signup
 - [ ] **Custom favicon** — replace default Nuxt `/favicon.ico` (see `app/app.vue` + `public/`); use BeReady SOS / shield-check branding
 - [ ] **Add pets to household** — track pets in settings; factor into water/food planning
 - [ ] **Scenarios & containers** — shelter-in-place vs mobile/evacuation; “what items are where?” (see `DECISIONS.md`)

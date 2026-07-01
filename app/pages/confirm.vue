@@ -71,7 +71,8 @@ async function finishWithSession() {
 
   clearTimeout(redirectTimer)
   redirectTimer = setTimeout(() => {
-    navigateTo('/', { external: true })
+    const destination = consumePostAuthRedirect() ?? '/'
+    navigateTo(destination, { external: true })
   }, 2200)
 }
 

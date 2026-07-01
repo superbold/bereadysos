@@ -8,11 +8,26 @@ definePageMeta({
 
 const supabase = useSupabaseClient()
 const user = useSupabaseUser()
+const route = useRoute()
 const toast = useToast()
 const loading = ref(false)
 const signedUp = ref(false)
 const signedUpEmail = ref('')
 const authRedirectUrl = useAuthRedirectUrl()
+
+const postAuthRedirect = computed(() => {
+  const redirect = route.query.redirect
+  if (typeof redirect === 'string' && redirect.startsWith('/')) {
+    return redirect
+  }
+  return null
+})
+
+onMounted(() => {
+  if (postAuthRedirect.value) {
+    setPostAuthRedirect(postAuthRedirect.value)
+  }
+})
 
 const schema = z.object({
   first_name: z.string().trim().min(1, 'First name is required').max(40),
@@ -58,8 +73,9 @@ const fields = [
 ]
 
 watch(user, (value) => {
-  if (value) {
-    navigateTo('/', { external: true })
+  if (value && !signedUp.value) {
+    const destination = consumePostAuthRedirect() ?? '/'
+    navigateTo(destination, { external: true })
   }
 }, { immediate: true })
 
@@ -121,11 +137,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       </p>
 
       <p class="mt-4 max-w-xs text-xs text-muted">
-        The link opens a short confirmation screen, then takes you straight to your dashboard.
+        After you confirm, we&rsquo;ll return you to finish joining the plan.
       </p>
 
       <UButton
-        to="/auth/login"
+        :to="`/auth/login${postAuthRedirect ? `?redirect=${encodeURIComponent(postAuthRedirect)}` : ''}`"
         label="Already confirmed? Sign in"
         color="neutral"
         variant="soft"
@@ -148,7 +164,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         <p>
           Already have an account?
           <NuxtLink
-            to="/auth/login"
+            :to="`/auth/login${postAuthRedirect ? `?redirect=${encodeURIComponent(postAuthRedirect)}` : ''}`"
             class="font-medium text-primary hover:underline"
           >
             Sign in
