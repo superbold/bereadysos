@@ -778,3 +778,98 @@
 .dark .alerts-panel__icon--warning {
   color: var(--ui-color-warning-400);
 }
+
+/* Plan picker prototype — /plan-picker */
+.plan-picker-card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow: hidden;
+  border-radius: var(--ui-radius);
+  border: 1px solid var(--ui-border);
+  background: var(--ui-bg);
+  padding: 1rem 1rem 1rem 1.125rem;
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.plan-picker-card:hover {
+  border-color: color-mix(in oklab, var(--plan-stripe) 45%, var(--ui-border));
+  box-shadow: 0 4px 24px color-mix(in oklab, var(--plan-stripe) 12%, transparent);
+  transform: translateY(-1px);
+}
+
+.plan-picker-card:focus-visible {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+
+.plan-picker-card__stripe {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background: var(--plan-stripe);
+}
+
+.plan-picker-card--owned {
+  border-color: color-mix(in oklab, var(--ui-primary) 35%, var(--ui-border));
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--ui-primary) 10%, var(--ui-bg)),
+      var(--ui-bg)
+    );
+}
+
+.plan-picker-card--owned .plan-picker-card__stripe {
+  width: 6px;
+}
+
+.plan-theme--rose {
+  background: color-mix(in oklab, #f472b6 6%, var(--ui-bg));
+}
+
+.plan-theme--sky {
+  background: color-mix(in oklab, #38bdf8 7%, var(--ui-bg));
+}
+
+.plan-theme--amber {
+  background: color-mix(in oklab, #fbbf24 8%, var(--ui-bg));
+}
+
+.plan-theme--violet {
+  background: color-mix(in oklab, #a78bfa 7%, var(--ui-bg));
+}
+
+.plan-picker-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.plan-picker-card__role-desc {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--ui-text-muted);
+}
+
+.plan-picker-card__alerts {
+  border-radius: calc(var(--ui-radius) - 2px);
+  border: 1px solid var(--ui-border);
+  background: color-mix(in oklab, var(--ui-bg-elevated) 80%, transparent);
+  padding: 0.75rem;
+}
+
+.plan-picker-card__activity {
+  margin-top: auto;
+}
+
+.plan-picker-card__cta {
+  display: inline-flex;
+  align-items: center;
+}

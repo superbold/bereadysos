@@ -1,0 +1,144 @@
+{
+  "meta": {
+    "description": "Mock data for the post-login plan picker prototype. Not used in production.",
+    "viewerFirstName": "Scott"
+  },
+  "plans": [
+    {
+      "id": "plan-scott-owned",
+      "ownerFirstName": "Scott",
+      "householdName": "Scott household",
+      "displayName": "Scott's plan",
+      "role": "owner",
+      "roleLabel": "Your plan",
+      "roleDescription": "You set targets, invite helpers, and own this inventory.",
+      "isOwned": true,
+      "theme": {
+        "accentClass": "plan-theme--owned",
+        "stripeColor": "var(--ui-primary)"
+      },
+      "summary": "4 people · 7-day target",
+      "notifications": [
+        {
+          "id": "n1",
+          "severity": "warning",
+          "icon": "i-lucide-calendar-clock",
+          "text": "2 expiring within 30 days"
+        },
+        {
+          "id": "n2",
+          "severity": "error",
+          "icon": "i-lucide-droplets",
+          "text": "Water: shortfall +4 gal"
+        },
+        {
+          "id": "n3",
+          "severity": "neutral",
+          "icon": "i-lucide-shopping-cart",
+          "text": "Restock awaiting intake"
+        }
+      ],
+      "alertCount": 3,
+      "lastActivity": "You updated inventory yesterday"
+    },
+    {
+      "id": "plan-suzy-watcher",
+      "ownerFirstName": "Suzy",
+      "householdName": "Suzy & Pat",
+      "displayName": "Suzy's plan",
+      "role": "watcher",
+      "roleLabel": "Watcher",
+      "roleDescription": "Read-only — you can view and suggest, not edit inventory.",
+      "isOwned": false,
+      "theme": {
+        "accentClass": "plan-theme--rose",
+        "stripeColor": "#f472b6"
+      },
+      "summary": "2 people · 14-day target",
+      "notifications": [
+        {
+          "id": "n4",
+          "severity": "warning",
+          "icon": "i-lucide-utensils",
+          "text": "Food gap: need +18 servings"
+        }
+      ],
+      "alertCount": 1,
+      "lastActivity": "Suzy started a restock run 2 days ago"
+    },
+    {
+      "id": "plan-bobby-shopper",
+      "ownerFirstName": "Bobby",
+      "householdName": "Bobby apartment",
+      "displayName": "Bobby's plan",
+      "role": "shopper",
+      "roleLabel": "Shopper",
+      "roleDescription": "Verify the list in the store and mark shopping complete.",
+      "isOwned": false,
+      "theme": {
+        "accentClass": "plan-theme--sky",
+        "stripeColor": "#38bdf8"
+      },
+      "summary": "1 person · 3-day target",
+      "notifications": [
+        {
+          "id": "n5",
+          "severity": "neutral",
+          "icon": "i-lucide-shopping-cart",
+          "text": "Shopping in progress — 6 items"
+        }
+      ],
+      "alertCount": 1,
+      "lastActivity": "Bobby sent you the list this morning"
+    },
+    {
+      "id": "plan-rose-keeper",
+      "ownerFirstName": "Rose",
+      "householdName": "Rose family",
+      "displayName": "Rose's plan",
+      "role": "maintainer",
+      "roleLabel": "Inventory keeper",
+      "roleDescription": "You update inventory after shops and rotations.",
+      "isOwned": false,
+      "theme": {
+        "accentClass": "plan-theme--amber",
+        "stripeColor": "#fbbf24"
+      },
+      "summary": "3 people · 7-day target",
+      "notifications": [
+        {
+          "id": "n6",
+          "severity": "error",
+          "icon": "i-lucide-circle-alert",
+          "text": "1 expired item"
+        },
+        {
+          "id": "n7",
+          "severity": "neutral",
+          "icon": "i-lucide-package",
+          "text": "Intake pending — log 4 items"
+        }
+      ],
+      "alertCount": 2,
+      "lastActivity": "Shopping marked complete yesterday"
+    },
+    {
+      "id": "plan-maria-watcher",
+      "ownerFirstName": "Maria",
+      "householdName": "Maria & Luis",
+      "displayName": "Maria's plan",
+      "role": "watcher",
+      "roleLabel": "Watcher",
+      "roleDescription": "Read-only — calm check-ins, no inventory edits.",
+      "isOwned": false,
+      "theme": {
+        "accentClass": "plan-theme--violet",
+        "stripeColor": "#a78bfa"
+      },
+      "summary": "5 people · 30-day target",
+      "notifications": [],
+      "alertCount": 0,
+      "lastActivity": "All caught up — no open alerts"
+    }
+  ]
+}
