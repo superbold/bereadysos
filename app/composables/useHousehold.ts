@@ -9,11 +9,21 @@ import {
 type HouseholdRow = Household
 type MemberRole = Database['public']['Enums']['member_role']
 
-const COLLABORATOR_ROLES: MemberRole[] = ['maintainer', 'member', 'shopper', 'watcher']
-
 export function useHousehold() {
   const supabase = useSupabaseClient<Database>()
   const user = useSupabaseUser()
+  const {
+    memberships,
+    activeHouseholdId,
+    activeMembership,
+    membershipCount,
+    hasMultiplePlans,
+    membershipsPending,
+    fetchAllMemberships,
+    setActivePlan,
+    membershipForHousehold,
+    clearMemberships
+  } = useHouseholdMemberships()
 
   const household = useState<HouseholdRow | null>('household', () => null)
   const membershipRole = useState<MemberRole | null>('household-membership-role', () => null)
@@ -31,67 +41,51 @@ export function useHousehold() {
   const canEditInventory = computed(() => roleCanEditInventory(membershipRole.value))
   const canManageSettings = computed(() => canManageHouseholdSettings(membershipRole.value))
 
+  function applyMembership(membership: ReturnType<typeof membershipForHousehold>) {
+    if (!membership) {
+      household.value = null
+      membershipRole.value = null
+      return null
+    }
+
+    membershipRole.value = membership.role
+    household.value = membership.household
+    return membership.household
+  }
+
   function clearHousehold() {
     household.value = null
     membershipRole.value = null
     error.value = null
+    clearMemberships()
   }
 
   async function fetchHousehold() {
     const userId = user.value?.sub
     if (!userId) {
-      clearHousehold()
+      household.value = null
+      membershipRole.value = null
       return null
     }
 
     pending.value = true
     error.value = null
 
-    const { data: ownerRow, error: ownerError } = await supabase
-      .from('household_members')
-      .select('role, households(*)')
-      .eq('user_id', userId)
-      .eq('role', 'owner')
-      .maybeSingle()
-
-    if (ownerError) {
-      pending.value = false
-      error.value = ownerError.message
-      return null
+    if (!memberships.value.length) {
+      await fetchAllMemberships()
     }
 
-    if (ownerRow?.households) {
-      membershipRole.value = 'owner'
-      household.value = ownerRow.households as HouseholdRow
-      pending.value = false
-      return household.value
-    }
-
-    const { data: collaboratorRows, error: collaboratorError } = await supabase
-      .from('household_members')
-      .select('role, households(*)')
-      .eq('user_id', userId)
-      .in('role', COLLABORATOR_ROLES)
-      .order('created_at', { ascending: true })
-      .limit(1)
-
+    const targetId = activeHouseholdId.value
+    const membership = membershipForHousehold(targetId)
     pending.value = false
 
-    if (collaboratorError) {
-      error.value = collaboratorError.message
+    if (!membership) {
+      household.value = null
+      membershipRole.value = null
       return null
     }
 
-    const collaboratorRow = collaboratorRows?.[0]
-    if (collaboratorRow?.households) {
-      membershipRole.value = collaboratorRow.role
-      household.value = collaboratorRow.households as HouseholdRow
-      return household.value
-    }
-
-    membershipRole.value = null
-    household.value = null
-    return null
+    return applyMembership(membership)
   }
 
   async function ensureHousehold() {
@@ -123,6 +117,8 @@ export function useHousehold() {
       return null
     }
 
+    await fetchAllMemberships()
+    setActivePlan(created.id)
     membershipRole.value = 'owner'
     household.value = created
     return created
@@ -145,12 +141,24 @@ export function useHousehold() {
     }
 
     household.value = data
+    await fetchAllMemberships()
+    setActivePlan(data.id)
     return { data, error: null }
+  }
+
+  async function switchActivePlan(householdId: string) {
+    const membership = setActivePlan(householdId)
+    return applyMembership(membership)
   }
 
   return {
     household,
     membershipRole,
+    memberships,
+    activeHouseholdId,
+    activeMembership,
+    membershipCount,
+    hasMultiplePlans,
     isHouseholdOwner,
     isHouseholdGuest,
     isInventoryKeeper,
@@ -159,11 +167,13 @@ export function useHousehold() {
     isReadOnlyOnPlan,
     canEditInventory,
     canManageSettings,
-    pending,
+    pending: computed(() => pending.value || membershipsPending.value),
     error,
     fetchHousehold,
+    fetchAllMemberships,
     ensureHousehold,
     updateHousehold,
+    switchActivePlan,
     clearHousehold
   }
 }

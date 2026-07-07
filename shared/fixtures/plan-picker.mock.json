@@ -48,7 +48,7 @@
       "displayName": "Suzy's plan",
       "role": "watcher",
       "roleLabel": "Watcher",
-      "roleDescription": "Read-only — you can view and suggest, not edit inventory.",
+      "roleDescription": "Read-only — watch the plan, offer suggestions, and see when the owner follows up — without editing inventory or settings.",
       "isOwned": false,
       "theme": {
         "accentClass": "plan-theme--rose",
@@ -129,7 +129,7 @@
       "displayName": "Maria's plan",
       "role": "watcher",
       "roleLabel": "Watcher",
-      "roleDescription": "Read-only — calm check-ins, no inventory edits.",
+      "roleDescription": "Read-only — watch the plan, offer suggestions, and see when the owner follows up — without editing inventory or settings.",
       "isOwned": false,
       "theme": {
         "accentClass": "plan-theme--violet",

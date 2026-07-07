@@ -5,6 +5,7 @@ import {
   canManageHouseholdSettings,
   isCollaboratorOnPlan,
   isReadOnlyCollaborator,
+  roleDescription,
   roleLabel
 } from '../shared/household-roles.ts'
 
@@ -36,5 +37,9 @@ describe('household roles', () => {
   it('identifies collaborators on a plan', () => {
     assert.equal(isCollaboratorOnPlan('owner'), false)
     assert.equal(isCollaboratorOnPlan('shopper'), true)
+  })
+
+  it('uses the standard watcher description', () => {
+    assert.match(roleDescription('watcher'), /^Read-only — watch the plan/)
   })
 })

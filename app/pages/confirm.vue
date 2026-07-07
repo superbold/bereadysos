@@ -71,7 +71,7 @@ async function finishWithSession() {
 
   clearTimeout(redirectTimer)
   redirectTimer = setTimeout(() => {
-    const destination = consumePostAuthRedirect() ?? '/'
+    const destination = consumePostAuthRedirect() ?? '/plan-picker'
     navigateTo(destination, { external: true })
   }, 2200)
 }
@@ -195,7 +195,7 @@ onUnmounted(() => {
         You're ready!
       </h1>
       <p class="confirm-state__copy">
-        Your email is confirmed. Taking you to your dashboard&hellip;
+        Your email is confirmed. Taking you to your plans&hellip;
       </p>
     </div>
 

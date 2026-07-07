@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { PlanPickerCard } from '#shared/plan-picker-fixture'
+import type { PlanPickerCardModel } from '#shared/plan-picker'
 
 defineProps<{
-  plan: PlanPickerCard
+  plan: PlanPickerCardModel
 }>()
 
 const emit = defineEmits<{

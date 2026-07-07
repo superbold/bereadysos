@@ -174,7 +174,7 @@ export function useHouseholdSharing() {
 
 export function useHouseholdInviteAccept() {
   const supabase = useSupabaseClient<Database>()
-  const { fetchHousehold } = useHousehold()
+  const { fetchAllMemberships, switchActivePlan, fetchHousehold } = useHousehold()
 
   async function previewInvite(token: string) {
     return supabase.rpc('preview_household_invite', { p_token: token })
@@ -182,7 +182,9 @@ export function useHouseholdInviteAccept() {
 
   async function acceptInvite(token: string) {
     const { data, error } = await supabase.rpc('accept_household_invite', { p_token: token })
-    if (!error) {
+    if (!error && data?.id) {
+      await fetchAllMemberships()
+      await switchActivePlan(data.id)
       await fetchHousehold()
     }
     return { data, error }

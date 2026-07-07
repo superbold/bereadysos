@@ -1,12 +1,12 @@
 <script setup lang="ts">
 const user = useSupabaseUser()
-const { planLabel } = useHouseholdPlan()
+const { planLabel, hasMultiplePlans } = useHouseholdPlan()
 </script>
 
 <template>
   <NuxtLink
     v-if="user"
-    to="/"
+    :to="hasMultiplePlans ? '/plan-picker' : '/'"
     class="app-shell__brand"
   >
     <UIcon
@@ -20,6 +20,12 @@ const { planLabel } = useHouseholdPlan()
       </span>
       <span class="block truncate text-xs font-medium text-muted leading-tight">
         {{ planLabel }}
+        <span
+          v-if="hasMultiplePlans"
+          class="text-primary"
+        >
+          · switch
+        </span>
       </span>
     </span>
   </NuxtLink>

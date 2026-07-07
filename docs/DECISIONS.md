@@ -77,6 +77,8 @@ For mobile readiness, users need **“What items are where?”** — not just to
 
 **Phase A:** Owner creates restock run from plan gaps → sends to shopper → shopper marks complete → awaiting intake banner.
 
+**Plan picker (shipped):** After login, `/plan-picker` lists every membership (owned + helping) with role copy, alert previews, and plan tint. One plan auto-opens the dashboard; multiple plans require a choice. Header brand links back to switch plans.
+
 **Phase B (later):** `intake_pending` workflow; maintainer logs items explicitly.
 
 **Phase C (later):** Owner reconcile split view — **Accept** / **Send back** / **Accept inventory**.

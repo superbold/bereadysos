@@ -95,18 +95,20 @@ Living list of what’s shipped and what’s next. Update when a phase lands or 
 - [x] Inventory read-only for shopper / watcher
 - [ ] Phase B: intake pending state + maintainer handoff
 - [ ] Phase C: owner reconcile UI (accept / send back / accept inventory)
+- [x] Plan picker — post-login plan grid with real memberships, alerts, active plan context
 
 ---
 
 ## Next
 
-_Phase A coordination in progress — see **In progress** above._
+_Phase B intake + polish — see **In progress** and **Later**._
 
 ---
 
 ## Later
 
 - [ ] **Internal admin / support tools** — view users & households, revoke memberships, resend/cancel invites, delete test accounts (replace manual Supabase SQL); admin-only auth, not public signup
+- [ ] **Landing page plan-picker showcase** — use plan card grid (mock or sanitized demo) on marketing page to show multi-household coordination
 - [ ] **Custom favicon** — replace default Nuxt `/favicon.ico` (see `app/app.vue` + `public/`); use BeReady SOS / shield-check branding
 - [ ] **Add pets to household** — track pets in settings; factor into water/food planning
 - [ ] **Scenarios & containers** — shelter-in-place vs mobile/evacuation; “what items are where?” (see `DECISIONS.md`)

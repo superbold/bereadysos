@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import { roleLabel } from '#shared/household-roles'
+import { roleDescription, roleLabel } from '#shared/household-roles'
 
 const { household, pending, error: householdError, ensureHousehold, updateHousehold, isHouseholdOwner, isHouseholdGuest, membershipRole, canManageSettings } = useHousehold()
 const { profile, fetchProfile, updateProfile } = useProfile()
@@ -155,11 +155,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         color="primary"
         icon="i-lucide-users"
         :title="`You are the ${roleLabel(membershipRole).toLowerCase()} on this plan`"
-        :description="canManageSettings
-          ? ''
-          : membershipRole === 'shopper' || membershipRole === 'watcher'
-            ? 'You can view the plan and inventory. Use Restock when it is time to shop.'
-            : 'You can update inventory and your first name. Only the plan owner changes targets and sharing.'"
+        :description="roleDescription(membershipRole)"
         variant="subtle"
       />
 

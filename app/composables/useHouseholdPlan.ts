@@ -3,7 +3,7 @@ import { formatPlanOwnerLabel } from '#shared/display'
 export function useHouseholdPlan() {
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()
-  const { household } = useHousehold()
+  const { household, hasMultiplePlans } = useHousehold()
   const { profile } = useProfile()
 
   const ownerFirstName = useState<string | null>('household-owner-first-name', () => null)
@@ -51,6 +51,7 @@ export function useHouseholdPlan() {
   return {
     planLabel,
     ownerFirstName,
+    hasMultiplePlans,
     fetchOwnerFirstName
   }
 }

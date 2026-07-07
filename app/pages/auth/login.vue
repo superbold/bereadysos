@@ -17,12 +17,13 @@ const redirectTo = computed(() => {
   if (typeof redirect === 'string' && redirect.startsWith('/')) {
     return redirect
   }
-  return '/'
+  return '/plan-picker'
 })
 
 onMounted(() => {
-  if (redirectTo.value !== '/') {
-    setPostAuthRedirect(redirectTo.value)
+  const redirect = route.query.redirect
+  if (typeof redirect === 'string' && redirect.startsWith('/')) {
+    setPostAuthRedirect(redirect)
   }
 })
 
