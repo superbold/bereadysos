@@ -93,6 +93,14 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       @submit="onSubmit"
     >
       <template #footer>
+        <p class="mb-2">
+          <NuxtLink
+            to="/auth/forgot-password"
+            class="font-medium text-primary hover:underline"
+          >
+            Forgot your password?
+          </NuxtLink>
+        </p>
         <p>
           New here?
           <NuxtLink

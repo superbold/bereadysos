@@ -166,11 +166,29 @@ See also **Later** in `docs/BACKLOG.md`.
 
 ### Supabase email template (Confirm signup)
 
+Branded HTML: paste from `supabase/email-templates/confirm-signup.html` (Authentication → Emails → Confirm signup → Source).
+
+Minimal link-only fallback:
+
 ```html
 <a href="{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=email">
   Confirm your email
 </a>
 ```
+
+### Supabase email template (Reset password)
+
+Branded HTML: paste from `supabase/email-templates/reset-password.html` (Authentication → Emails → Reset password → Source).
+
+Minimal link-only fallback:
+
+```html
+<a href="{{ .SiteURL }}/api/auth/recover?token_hash={{ .TokenHash }}&type=recovery">
+  Reset your password
+</a>
+```
+
+**Redirect URLs** (Authentication → URL Configuration): add `/confirm`, `/auth/reset-password`, and `/api/auth/recover` for production and localhost.
 
 **Site URL:** `https://bereadysos.com` (not localhost for production emails).
 

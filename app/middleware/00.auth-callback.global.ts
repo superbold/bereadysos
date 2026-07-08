@@ -6,7 +6,7 @@
  * Prefixed with 00 so this runs before the Supabase global-auth middleware.
  */
 export default defineNuxtRouteMiddleware((to) => {
-  if (to.path === '/confirm') {
+  if (to.path === '/confirm' || to.path === '/auth/reset-password') {
     return
   }
 
@@ -19,16 +19,17 @@ export default defineNuxtRouteMiddleware((to) => {
     && typeof type === 'string' && type.length > 0
 
   if (hasCode || hasTokenHash) {
-    // token_hash links go through the server route so cookies are set before /confirm
     if (hasTokenHash) {
+      const path = type === 'recovery' ? '/api/auth/recover' : '/api/auth/confirm'
       return navigateTo({
-        path: '/api/auth/confirm',
+        path,
         query: { ...to.query }
       }, { replace: true })
     }
 
+    const path = type === 'recovery' ? '/auth/reset-password' : '/confirm'
     return navigateTo({
-      path: '/confirm',
+      path,
       query: { ...to.query }
     }, { replace: true })
   }

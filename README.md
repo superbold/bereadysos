@@ -27,14 +27,14 @@ app/
 │   ├── auth-confirm.vue  # Email confirmation callback (centered)
 │   └── default.vue       # Main app shell with navigation
 ├── pages/
-│   ├── auth/             # Login and signup
+│   ├── auth/             # Login, signup, forgot/reset password
 │   ├── confirm.vue       # "You're ready!" after email confirm
 │   ├── index.vue         # Dashboard (coverage summary)
 │   ├── inventory.vue     # Inventory CRUD
 │   ├── plan.vue          # Gap list for target days
 │   ├── expiring.vue      # Expiration-sorted view
 │   └── settings.vue      # Household name, headcount, target days
-server/api/auth/          # token_hash email confirm endpoint
+server/api/auth/          # token_hash confirm + recover endpoints
 supabase/migrations/      # SQL schema (apply in Supabase dashboard)
 ```
 
@@ -106,9 +106,29 @@ Do **not** put the Resend API key in Vercel for the current auth flow. Supabase 
 | Setting | Example |
 |---------|---------|
 | Site URL | `https://bereadysos.com` |
-| Redirect URLs | `https://bereadysos.com/confirm`, `http://localhost:3000/confirm` |
+| Redirect URLs | `https://bereadysos.com/confirm`, `https://bereadysos.com/auth/reset-password`, `https://bereadysos.com/api/auth/recover`, `http://localhost:3000/confirm`, `http://localhost:3000/auth/reset-password`, `http://localhost:3000/api/auth/recover` |
 
 The `/confirm` route must match `callback` in `nuxt.config.ts` and be listed in Supabase redirect URLs.
+
+### Password reset flow
+
+```
+User clicks "Forgot your password?" on sign in
+        ↓
+/auth/forgot-password → Supabase resetPasswordForEmail
+        ↓
+Supabase sends recovery email via Resend SMTP
+        ↓
+User clicks link → GET /api/auth/recover?token_hash=…&type=recovery
+        ↓
+Server verifyOtp (recovery) → session cookie → /auth/reset-password
+        ↓
+User sets new password → sign in
+```
+
+Update the **Reset password** email template in Supabase (Authentication → Emails) to use `token_hash` — see [docs/DECISIONS.md](./docs/DECISIONS.md).
+
+**Branded templates:** copy HTML from `supabase/email-templates/` into Supabase (Confirm signup + Reset password). Same green primary, Public Sans, and BeReady SOS card layout as the auth pages.
 
 ### Domain & DNS (email vs website)
 

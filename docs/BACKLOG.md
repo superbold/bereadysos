@@ -22,6 +22,7 @@ Living list of what’s shipped and what’s next. Update when a phase lands or 
 - [x] Auth callback middleware (`?code=` / `?token_hash=` → confirm)
 - [x] Full-page redirect to dashboard after confirm (session cookie fix)
 - [x] Supabase email template uses `token_hash` (not default `ConfirmationURL` / PKCE)
+- [x] Forgot password — `/auth/forgot-password`, recovery email, `/auth/reset-password`
 
 ### App shell
 - [x] Dashboard with household summary (`/`)
@@ -115,7 +116,7 @@ _Phase C owner reconcile — see **In progress** above._
 - [ ] **Scenarios & containers** — shelter-in-place vs mobile/evacuation; “what items are where?” (see `DECISIONS.md`)
 - [ ] **Invite email delivery** — send invite links via Resend instead of copy/paste only
 - [ ] Starter templates (72-hour kit, earthquake, winter storm)
-- [ ] Branded HTML email template in Supabase (beyond plain link)
+- [x] Branded HTML email templates in repo (`supabase/email-templates/`) — paste into Supabase Confirm + Reset password
 - [ ] CSV import / export shopping list
 - [ ] Consumption log (decrement qty when used)
 - [ ] Push / email expiration reminders (Edge Functions + cron)
