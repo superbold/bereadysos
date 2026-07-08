@@ -79,7 +79,7 @@ For mobile readiness, users need **“What items are where?”** — not just to
 
 **Plan picker (shipped):** After login, `/plan-picker` lists every membership (owned + helping) with role copy, alert previews, and plan tint. One plan auto-opens the dashboard; multiple plans require a choice. Header brand links back to switch plans.
 
-**Phase B (later):** `intake_pending` workflow; maintainer logs items explicitly.
+**Phase B (shipped):** After shopping completes, the inventory keeper starts intake, logs each line (bought / substituted / skipped + quantity + note), and submits for owner review. Inventory is **not** auto-updated — Phase C accepts into inventory.
 
 **Phase C (later):** Owner reconcile split view — **Accept** / **Send back** / **Accept inventory**.
 

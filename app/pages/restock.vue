@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computeAllCategoryGaps } from '#shared/coverage'
+import { formatReportedQuantity, INTAKE_LINE_STATUS_LABELS } from '#shared/shop-run-intake'
+import type { ShopRunLine } from '~/types/database.types'
 
 const toast = useToast()
 const {
@@ -25,10 +27,18 @@ const {
   createRun,
   addLine,
   startRun,
-  completeShopping
+  completeShopping,
+  startIntake,
+  updateLineIntake,
+  submitIntake,
+  shoppingCompleteRun,
+  intakeRun,
+  submittedIntakeRun,
+  intakeReadyToSubmit
 } = useShopRuns()
 
 const completeNote = ref('')
+const savingLineId = ref<string | null>(null)
 
 const isLoading = computed(() =>
   householdPending.value || (inventoryPending.value && !items.value.length && !isReadOnlyOnPlan.value)
@@ -58,8 +68,8 @@ const openGaps = computed(() => {
 
 const draftRun = computed(() => runs.value.find(run => run.status === 'draft'))
 const shoppingRun = computed(() => runs.value.find(run => run.status === 'shopping'))
-const awaitingIntakeRun = computed(() =>
-  runs.value.find(run => run.status === 'shopping_complete' || run.status === 'intake_pending')
+const hasActiveCoordinationRun = computed(() =>
+  !!(draftRun.value || shoppingRun.value || shoppingCompleteRun.value || intakeRun.value || submittedIntakeRun.value)
 )
 
 const statusLabels: Record<string, string> = {
@@ -169,6 +179,76 @@ async function onCompleteShopping(runId: string) {
     icon: 'i-lucide-check-circle'
   })
 }
+
+async function onStartIntake(runId: string) {
+  const { error } = await startIntake(runId)
+  if (error) {
+    toast.add({
+      title: 'Could not start intake',
+      description: error.message,
+      color: 'error',
+      icon: 'i-lucide-circle-alert'
+    })
+    return
+  }
+
+  toast.add({
+    title: 'Intake started',
+    description: 'Log each item below — inventory is not updated until the owner reviews.',
+    color: 'success',
+    icon: 'i-lucide-package-open'
+  })
+}
+
+async function onSaveIntakeLine(
+  line: ShopRunLine,
+  payload: {
+    line_status: 'bought' | 'skipped' | 'substituted'
+    quantity_reported: number | null
+    intake_note: string | null
+  }
+) {
+  savingLineId.value = line.id
+  const { error } = await updateLineIntake(line.id, payload)
+  savingLineId.value = null
+
+  if (error) {
+    toast.add({
+      title: 'Could not save line',
+      description: error.message,
+      color: 'error',
+      icon: 'i-lucide-circle-alert'
+    })
+    return
+  }
+
+  toast.add({
+    title: 'Line saved',
+    description: line.name,
+    color: 'success',
+    icon: 'i-lucide-check'
+  })
+}
+
+async function onSubmitIntake(runId: string) {
+  const { error } = await submitIntake(runId)
+  if (error) {
+    toast.add({
+      title: 'Could not submit intake',
+      description: error.message,
+      color: 'error',
+      icon: 'i-lucide-circle-alert'
+    })
+    return
+  }
+
+  toast.add({
+    title: 'Intake submitted',
+    description: 'The plan owner can review and accept inventory in a future update.',
+    color: 'success',
+    icon: 'i-lucide-send'
+  })
+}
 </script>
 
 <template>
@@ -189,7 +269,7 @@ async function onCompleteShopping(runId: string) {
       :title="isShopper ? 'You are the shopper' : 'You are watching this plan'"
       :description="isShopper
         ? 'You can view the shopping list and mark the run complete when done.'
-        : 'You have read-only access. Suggestions and intake review come in a later update.'"
+        : 'You have read-only access. Suggestions and owner review come in a later update.'"
       variant="subtle"
       class="mb-6"
     />
@@ -226,7 +306,7 @@ async function onCompleteShopping(runId: string) {
           <UButton
             label="Restock from plan gaps"
             icon="i-lucide-list-plus"
-            :disabled="!openGaps.length || !!draftRun || !!shoppingRun"
+            :disabled="!openGaps.length || hasActiveCoordinationRun"
             :loading="working"
             @click="onCreateFromGaps"
           />
@@ -235,7 +315,7 @@ async function onCompleteShopping(runId: string) {
             icon="i-lucide-plus"
             color="neutral"
             variant="outline"
-            :disabled="!!draftRun || !!shoppingRun"
+            :disabled="hasActiveCoordinationRun"
             :loading="working"
             @click="createRun()"
           />
@@ -246,6 +326,12 @@ async function onCompleteShopping(runId: string) {
           class="text-sm text-muted"
         >
           No open plan gaps — your inventory meets your target, or add items on the Plan page.
+        </p>
+        <p
+          v-else-if="hasActiveCoordinationRun"
+          class="text-sm text-muted"
+        >
+          Finish the current run before starting another.
         </p>
       </section>
 
@@ -348,34 +434,155 @@ async function onCompleteShopping(runId: string) {
       </section>
 
       <section
-        v-if="awaitingIntakeRun"
-        class="mb-6 rounded-lg border border-warning/40 bg-warning/5 p-4"
+        v-if="shoppingCompleteRun"
+        class="mb-6 space-y-4 rounded-lg border border-warning/40 bg-warning/5 p-4"
       >
-        <h2 class="text-sm font-semibold text-highlighted">
-          Awaiting intake
-        </h2>
-        <p class="mt-1 text-sm text-muted">
-          Shopping is done. The inventory keeper can log these items in Inventory<template v-if="canEditInventory">
-            — that&rsquo;s you.
-          </template><template v-else>
-            when they&rsquo;re ready.
-          </template>
-        </p>
+        <div>
+          <h2 class="text-sm font-semibold text-highlighted">
+            Shopping complete — ready for intake
+          </h2>
+          <p class="mt-1 text-sm text-muted">
+            <template v-if="canEditInventory">
+              Log what actually came in. Inventory stays unchanged until the owner reviews.
+            </template>
+            <template v-else>
+              Waiting for the inventory keeper to log items.
+            </template>
+          </p>
+        </div>
+
+        <ul class="divide-y divide-default rounded-lg border border-default bg-default">
+          <li
+            v-for="line in shoppingCompleteRun.lines"
+            :key="line.id"
+            class="flex items-center justify-between gap-3 p-3 text-sm"
+          >
+            <span class="font-medium text-highlighted">{{ line.name }}</span>
+            <span class="text-muted">
+              <template v-if="line.quantity_planned != null">
+                {{ line.quantity_planned }}{{ line.unit ? ` ${line.unit}` : '' }}
+              </template>
+            </span>
+          </li>
+        </ul>
+
         <p
-          v-if="awaitingIntakeRun.shopping_note"
-          class="mt-2 text-sm text-highlighted"
+          v-if="shoppingCompleteRun.shopping_note"
+          class="text-sm text-highlighted"
         >
-          Shopper note: {{ awaitingIntakeRun.shopping_note }}
+          Shopper note: {{ shoppingCompleteRun.shopping_note }}
         </p>
+
         <UButton
-          to="/inventory"
-          label="Go to inventory"
-          icon="i-lucide-package"
-          class="mt-4"
-          size="sm"
-          color="neutral"
-          variant="soft"
+          v-if="canEditInventory"
+          label="Start intake"
+          icon="i-lucide-package-open"
+          :loading="working"
+          @click="onStartIntake(shoppingCompleteRun.id)"
         />
+      </section>
+
+      <section
+        v-if="intakeRun"
+        class="mb-6 space-y-4 rounded-lg border border-primary/30 bg-primary/5 p-4"
+      >
+        <div>
+          <h2 class="text-sm font-semibold text-highlighted">
+            Log intake
+          </h2>
+          <p class="mt-1 text-sm text-muted">
+            <template v-if="canEditInventory">
+              Record bought, substituted, or skipped for each line. Submit when done — the owner will review before inventory updates.
+            </template>
+            <template v-else>
+              The inventory keeper is logging what came in.
+            </template>
+          </p>
+        </div>
+
+        <p
+          v-if="intakeRun.shopping_note"
+          class="text-sm text-highlighted"
+        >
+          Shopper note: {{ intakeRun.shopping_note }}
+        </p>
+
+        <ul
+          v-if="canEditInventory"
+          class="divide-y divide-default rounded-lg border border-default bg-default"
+        >
+          <RestockIntakeLine
+            v-for="line in intakeRun.lines"
+            :key="line.id"
+            :line="line"
+            :saving="savingLineId === line.id"
+            @save="payload => onSaveIntakeLine(line, payload)"
+          />
+        </ul>
+
+        <ul
+          v-else
+          class="divide-y divide-default rounded-lg border border-default bg-default"
+        >
+          <li
+            v-for="line in intakeRun.lines"
+            :key="line.id"
+            class="flex flex-col gap-1 p-3 text-sm"
+          >
+            <span class="font-medium text-highlighted">{{ line.name }}</span>
+            <span
+              v-if="line.line_status !== 'pending'"
+              class="text-muted"
+            >
+              {{ INTAKE_LINE_STATUS_LABELS[line.line_status as 'bought' | 'skipped' | 'substituted'] }}
+              &middot;
+              {{ formatReportedQuantity(line.quantity_reported, line.unit) }}
+            </span>
+            <span
+              v-else
+              class="text-muted"
+            >
+              Not logged yet
+            </span>
+          </li>
+        </ul>
+
+        <UButton
+          v-if="canEditInventory"
+          label="Submit for owner review"
+          icon="i-lucide-send"
+          :disabled="!intakeReadyToSubmit"
+          :loading="working"
+          @click="onSubmitIntake(intakeRun.id)"
+        />
+      </section>
+
+      <section
+        v-if="submittedIntakeRun"
+        class="mb-6 space-y-4 rounded-lg border border-default p-4"
+      >
+        <div>
+          <h2 class="text-sm font-semibold text-highlighted">
+            Intake submitted
+          </h2>
+          <p class="mt-1 text-sm text-muted">
+            <template v-if="isHouseholdOwner">
+              The inventory keeper finished logging. Owner accept / send-back review is coming in the next update.
+            </template>
+            <template v-else>
+              Waiting for the plan owner to review and accept inventory.
+            </template>
+          </p>
+        </div>
+
+        <ul class="divide-y divide-default rounded-lg border border-default bg-default">
+          <RestockIntakeLine
+            v-for="line in submittedIntakeRun.lines"
+            :key="line.id"
+            :line="line"
+            readonly
+          />
+        </ul>
       </section>
 
       <section v-if="runs.length">
@@ -393,7 +600,13 @@ async function onCompleteShopping(runId: string) {
                 {{ run.title }}
               </p>
               <p class="text-sm text-muted">
-                {{ statusLabels[run.status] }} &middot; {{ run.lines.length }} items
+                <template v-if="run.intake_submitted_at">
+                  Awaiting owner review
+                </template>
+                <template v-else>
+                  {{ statusLabels[run.status] }}
+                </template>
+                &middot; {{ run.lines.length }} items
               </p>
             </div>
             <p class="text-xs text-muted">

@@ -30,8 +30,9 @@ function activityLineForShopRun(status: Database['public']['Enums']['shop_run_st
     case 'shopping':
       return 'Shopping in progress on this plan'
     case 'shopping_complete':
+      return 'Shopping complete — intake not started'
     case 'intake_pending':
-      return 'Shopping complete — intake pending'
+      return 'Intake in progress'
     case 'draft':
       return 'Restock list drafted'
     case 'closed':

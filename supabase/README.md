@@ -46,6 +46,12 @@ Run `migrations/20260625160000_household_coordination_enum.sql` first — adds `
 
 Run `migrations/20260625160100_household_coordination.sql` second — roles migration, Restock (`shop_runs`), read-only RLS. **Apply after** the enum step and household invites migration.
 
+Run `migrations/20260707120000_shop_run_intake.sql` — Phase B intake RPCs (`start_shop_run_intake`, `update_shop_run_line_intake`, `submit_shop_run_intake`) and `intake_submitted_at` on `shop_runs`.
+
+### Migration file names
+
+Files use `YYYYMMDDHHMMSS_description.sql` — the prefix is the **date the migration was authored**, not when you run it in Supabase. New migrations should use today’s timestamp; do not rename files after they have been applied.
+
 RLS is enabled on all tables. `categories` is read-only for signed-in users.
 
 ## Regenerate TypeScript types

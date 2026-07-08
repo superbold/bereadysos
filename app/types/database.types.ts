@@ -246,6 +246,7 @@ export type Database = {
           category_id: string | null
           created_at: string
           id: string
+          intake_note: string | null
           line_status: Database['public']['Enums']['shop_run_line_status']
           name: string
           quantity_planned: number | null
@@ -259,6 +260,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           id?: string
+          intake_note?: string | null
           line_status?: Database['public']['Enums']['shop_run_line_status']
           name: string
           quantity_planned?: number | null
@@ -272,6 +274,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           id?: string
+          intake_note?: string | null
           line_status?: Database['public']['Enums']['shop_run_line_status']
           name?: string
           quantity_planned?: number | null
@@ -297,6 +300,7 @@ export type Database = {
           created_by: string
           household_id: string
           id: string
+          intake_submitted_at: string | null
           shopper_user_id: string | null
           shopping_note: string | null
           status: Database['public']['Enums']['shop_run_status']
@@ -308,6 +312,7 @@ export type Database = {
           created_by: string
           household_id: string
           id?: string
+          intake_submitted_at?: string | null
           shopper_user_id?: string | null
           shopping_note?: string | null
           status?: Database['public']['Enums']['shop_run_status']
@@ -319,6 +324,7 @@ export type Database = {
           created_by?: string
           household_id?: string
           id?: string
+          intake_submitted_at?: string | null
           shopper_user_id?: string | null
           shopping_note?: string | null
           status?: Database['public']['Enums']['shop_run_status']
@@ -407,6 +413,23 @@ export type Database = {
       }
       complete_shop_run_shopping: {
         Args: { p_run_id: string, p_note?: string }
+        Returns: Database['public']['Tables']['shop_runs']['Row']
+      }
+      start_shop_run_intake: {
+        Args: { p_run_id: string }
+        Returns: Database['public']['Tables']['shop_runs']['Row']
+      }
+      update_shop_run_line_intake: {
+        Args: {
+          p_line_id: string
+          p_line_status: Database['public']['Enums']['shop_run_line_status']
+          p_quantity_reported?: number
+          p_intake_note?: string
+        }
+        Returns: Database['public']['Tables']['shop_run_lines']['Row']
+      }
+      submit_shop_run_intake: {
+        Args: { p_run_id: string }
         Returns: Database['public']['Tables']['shop_runs']['Row']
       }
     }

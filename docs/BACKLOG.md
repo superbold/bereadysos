@@ -85,23 +85,24 @@ Living list of what’s shipped and what’s next. Update when a phase lands or 
 
 ## In progress
 
-### Household coordination (Phase A)
-- [ ] **Apply migrations** (in order, two steps for coordination):
+### Household coordination
+- [ ] **Apply migrations** (in order):
   1. `20260625160000_household_coordination_enum.sql`
   2. `20260625160100_household_coordination.sql`
+  3. `20260707120000_shop_run_intake.sql` (Phase B intake)
 - [x] Roles: inventory keeper, shopper, watcher (+ legacy `member` → maintainer)
 - [x] `/restock` — create run from plan gaps, send to shopper, mark shopping complete
 - [x] Settings sharing — invite with role picker
 - [x] Inventory read-only for shopper / watcher
-- [ ] Phase B: intake pending state + maintainer handoff
-- [ ] Phase C: owner reconcile UI (accept / send back / accept inventory)
 - [x] Plan picker — post-login plan grid with real memberships, alerts, active plan context
+- [x] Phase B: intake pending + maintainer handoff (log lines, submit for owner review)
+- [ ] Phase C: owner reconcile UI (accept / send back / accept inventory)
 
 ---
 
 ## Next
 
-_Phase B intake + polish — see **In progress** and **Later**._
+_Phase C owner reconcile — see **In progress** above._
 
 ---
 

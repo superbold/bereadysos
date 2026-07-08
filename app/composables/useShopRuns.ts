@@ -1,10 +1,12 @@
 import type { Database, ShopRun, ShopRunLine } from '~/types/database.types'
+import type { ShopRunLineStatus } from '#shared/shop-run-intake'
+import { canSubmitIntakeRun } from '#shared/shop-run-intake'
 
 export type ShopRunWithLines = ShopRun & { lines: ShopRunLine[] }
 
 export function useShopRuns() {
   const supabase = useSupabaseClient<Database>()
-  const { household, isHouseholdOwner, isShopper } = useHousehold()
+  const { household, isHouseholdOwner, isShopper, canEditInventory } = useHousehold()
   const toast = useToast()
 
   const runs = useState<ShopRunWithLines[]>('shop-runs', () => [])
@@ -139,6 +141,118 @@ export function useShopRuns() {
     return { data, error: null }
   }
 
+  async function startIntake(runId: string) {
+    working.value = true
+    const { data, error } = await supabase.rpc('start_shop_run_intake', {
+      p_run_id: runId
+    })
+    working.value = false
+
+    if (error) {
+      return { data: null, error }
+    }
+
+    await loadRuns()
+    return { data, error: null }
+  }
+
+  async function updateLineIntake(
+    lineId: string,
+    payload: {
+      line_status: Exclude<ShopRunLineStatus, 'pending'>
+      quantity_reported?: number | null
+      intake_note?: string | null
+    }
+  ) {
+    const { data, error } = await supabase.rpc('update_shop_run_line_intake', {
+      p_line_id: lineId,
+      p_line_status: payload.line_status,
+      p_quantity_reported: payload.quantity_reported ?? undefined,
+      p_intake_note: payload.intake_note ?? undefined
+    })
+
+    if (error) {
+      return { data: null, error }
+    }
+
+    await loadRuns()
+    return { data, error: null }
+  }
+
+  async function submitIntake(runId: string) {
+    working.value = true
+    const { data, error } = await supabase.rpc('submit_shop_run_intake', {
+      p_run_id: runId
+    })
+    working.value = false
+
+    if (error) {
+      return { data: null, error }
+    }
+
+    await loadRuns()
+    return { data, error: null }
+  }
+
+  const shoppingCompleteRun = computed(() =>
+    runs.value.find(run => run.status === 'shopping_complete') ?? null
+  )
+
+  const intakeRun = computed(() =>
+    runs.value.find(run => run.status === 'intake_pending' && !run.intake_submitted_at) ?? null
+  )
+
+  const submittedIntakeRun = computed(() =>
+    runs.value.find(run => run.status === 'intake_pending' && !!run.intake_submitted_at) ?? null
+  )
+
+  const intakeReadyToSubmit = computed(() => {
+    const run = intakeRun.value
+    if (!run) {
+      return false
+    }
+    return canSubmitIntakeRun(run.lines)
+  })
+
+  const coordinationBanner = computed(() => {
+    if (shoppingCompleteRun.value) {
+      if (canEditInventory.value) {
+        return {
+          color: 'warning' as const,
+          title: 'Shopping complete — log intake',
+          description: 'The shopper finished. Start intake on Restock and log what came in.',
+          to: '/restock'
+        }
+      }
+      return {
+        color: 'warning' as const,
+        title: 'Shopping complete — awaiting intake',
+        description: 'The inventory keeper can log items on Restock when ready.',
+        to: '/restock'
+      }
+    }
+
+    if (intakeRun.value && canEditInventory.value) {
+      return {
+        color: 'primary' as const,
+        title: 'Intake in progress',
+        description: 'Log each item on Restock, then submit for the plan owner to review.',
+        to: '/restock'
+      }
+    }
+
+    if (submittedIntakeRun.value && isHouseholdOwner.value) {
+      return {
+        color: 'primary' as const,
+        title: 'Intake ready for your review',
+        description: 'The inventory keeper submitted their log. Owner review is coming in the next update.',
+        to: '/restock'
+      }
+    }
+
+    return null
+  })
+
   watch(household, () => {
     loadRuns()
   }, { immediate: true })
@@ -149,10 +263,19 @@ export function useShopRuns() {
     working,
     isHouseholdOwner,
     isShopper,
+    canEditInventory,
+    shoppingCompleteRun,
+    intakeRun,
+    submittedIntakeRun,
+    intakeReadyToSubmit,
+    coordinationBanner,
     loadRuns,
     createRun,
     addLine,
     startRun,
-    completeShopping
+    completeShopping,
+    startIntake,
+    updateLineIntake,
+    submitIntake
   }
 }

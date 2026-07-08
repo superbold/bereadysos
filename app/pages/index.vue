@@ -18,6 +18,7 @@ const {
   fetchCategories,
   fetchItems
 } = useInventory()
+const { coordinationBanner } = useShopRuns()
 
 const authReady = ref(import.meta.server)
 const savingTargetDays = ref(false)
@@ -163,6 +164,26 @@ function formatExpiringLabel(daysUntil: number) {
         :description="inventoryError"
         class="mb-6"
       />
+
+      <UAlert
+        v-if="coordinationBanner"
+        :color="coordinationBanner.color"
+        icon="i-lucide-shopping-cart"
+        :title="coordinationBanner.title"
+        :description="coordinationBanner.description"
+        variant="subtle"
+        class="mb-6"
+      >
+        <template #actions>
+          <UButton
+            :to="coordinationBanner.to"
+            label="Open Restock"
+            size="xs"
+            color="neutral"
+            variant="outline"
+          />
+        </template>
+      </UAlert>
 
       <section class="mb-8">
         <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
