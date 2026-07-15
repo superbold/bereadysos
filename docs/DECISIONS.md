@@ -14,6 +14,24 @@ Short record of choices worth remembering across sessions. Add a dated entry whe
 | Default target days | 7 (presets: 3/7/14/30/90) | Editable in `/settings` |
 | Plan gap / shortfall | User-facing terms for inventory below the chosen plan | Plan page, badges, auth hero |
 | Headcount | Single number per household | Named members later if needed |
+| Product priority | **Solo owner maintenance first** | Multi-role coordination is real but progressive — see below |
+
+### Solo owner first (priority)
+
+**Decision (2026-07-14):** Prioritize making the **plan owner** succeed alone — finish a plan and keep it maintained — before pushing multi-role household coordination as a primary path.
+
+**Why:**
+- The main gap is not motivation; it is **maintenance**. If an owner cannot keep inventory current with little friction, they will not finish or sustain a plan.
+- Owners who cannot maintain a plan will not invite helpers. Recruiting shoppers, inventory keepers, or watchers does not fix an empty or stale inventory loop.
+- Exposing all four roles (owner, inventory keeper, shopper, watcher) at once adds coordination responsibility before the owner has a durable personal workflow. That is the wrong order for most new users.
+
+**What this means:**
+- Product focus: one role, one loop — the owner sees what is wrong, fixes it in few steps, and knows the plan is current (gaps, expiring, restock-as-personal checklist, put-away).
+- Multi-role Restock (Phases A–C), plan picker for helpers, and invite role pickers stay in the product for households that already need them (e.g. testing, later maturity). They are **delegation of a working maintenance loop**, not the first-run tour.
+- UI should introduce helpers **progressively** when a clear pain appears (e.g. “someone else shops”), not front-load a four-role model on day one.
+- Do not remove shipped coordination capabilities; de-emphasize them until solo owner maintenance is strong.
+
+**Success signal for this direction:** An owner can create a plan, stock it meaningfully, and keep it updated over time without inviting anyone.
 
 ---
 
@@ -66,7 +84,9 @@ For mobile readiness, users need **“What items are where?”** — not just to
 
 ### Household coordination (Restock)
 
-**Status:** Phase A in progress. Internal name: **household coordination**; user-facing nav: **Restock**.
+**Status:** Phases A–B shipped; Phase C later. Product priority is now **solo owner first** (see above) — multi-role coordination is an advanced / progressive path, not the default onboarding focus.
+
+Internal name: **household coordination**; user-facing nav: **Restock**.
 
 | DB role | UI label | Inventory |
 |---------|----------|-----------|
@@ -83,7 +103,7 @@ For mobile readiness, users need **“What items are where?”** — not just to
 
 **Phase C (later):** Owner reconcile split view — **Accept** / **Send back** / **Accept inventory**.
 
-**Not yet:** Watcher suggestions, household switcher, activity feed.
+**Not yet:** Watcher suggestions, household switcher, activity feed. Test plan for multi-role: `docs/TestAll4Roles.md` (shelved).
 
 ---
 
@@ -269,3 +289,4 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | 2026-06 | Global alerts panel shipped — bell + badge + slideover; `shared/alerts.ts`, `useAlerts`, `AlertsBell.vue` |
 | 2026-06 | Household invites — Settings sharing section, accept page, guest `member` role |
 | 2026-06 | Household coordination Phase A — Restock nav, roles (inventory keeper / shopper / watcher), shop runs |
+| 2026-07 | Solo owner first — prioritize owner maintenance UX; multi-role coordination progressive / advanced, not day-one focus |
