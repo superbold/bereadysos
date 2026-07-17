@@ -33,6 +33,33 @@ Short record of choices worth remembering across sessions. Add a dated entry whe
 
 **Success signal for this direction:** An owner can create a plan, stock it meaningfully, and keep it updated over time without inviting anyone.
 
+### Solo loop UX map (ticket 1)
+
+**Decision (2026-07-14):** Primary “what do I do next?” surface is the **Dashboard** (`/`). **Restock** (`/restock`) is the **execution path** for plan trip → shop → log (tickets 2–4). Do **not** add a new Maintain page for v1 unless Dashboard + Restock stay cluttered after those passes.
+
+**Why Dashboard for See (phase 1):**
+- Owners already land on `/`; coverage, expiration, and (when mid-run) coordination banner already live there or in the shell AlertsBell.
+- Restock today is a multi-role state machine — wrong default landing when the owner has gaps but no run.
+- Stay-current nudges (phase 5) and ticket 6 belong on a home narrative with **one** primary CTA into Restock or Expiring/Inventory as needed.
+
+**Screen → phase map (today → direction):**
+
+| Phase | Today (scattered) | Solo direction |
+|-------|-------------------|----------------|
+| **1. See** | Dashboard coverage; Plan gaps; Expiring; AlertsBell → those pages | Dashboard owns one calm “this week / do this next” card; AlertsBell stays inbox, ranked toward that next action |
+| **2. Plan the trip** | Restock: owner can create run from gaps; Plan has **no** CTA to Restock; helper copy (“Send to shopper”) | Solo list-from-gaps on Restock; Plan (and See CTA) deep-link into that path |
+| **3. Shop** | Restock `shopping` status: read-only list + mark complete | Phone-as-list on Restock (check-off / qty); solo labels (not shopper handoff) |
+| **4. Log / put away** | Restock intake (doesn’t write inventory) + manual `/inventory` CRUD | Solo put-away that **updates inventory** from the list (v1 may simplify statuses; multi-role Phase C stays Later) |
+| **5. Stay current** | Alerts + reappearing gaps/expiring; no weekly narrative | Dashboard + alerts nudge back into See → Restock |
+
+**Rejected for v1 primary surface:** Guided Restock-as-home (helper status chrome, poor “all clear”); new Maintain route (extra nav until proven necessary).
+
+**Build order implied:** Ticket 6 (See on Dashboard) + ticket 2 (solo Restock) can proceed from this map; Prefer Dashboard CTA shaping in ticket 6, solo path simplification in ticket 2 (they can interleave).
+
+### Phase guide toons (polish, after solo loop)
+
+**Decision (2026-07-14):** Optional cell-shaded characters behind maintenance phases are a **Later** flourish — after Solo owner v1 loop UX exists. Preference lives in **gear / avatar settings** (e.g. none vs illustrated). **Do not** infer gender or style from the owner’s name.
+
 ---
 
 ## Future concepts (not scheduled)
@@ -234,6 +261,7 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | Categories | Seeded reference table | `consumable` vs `checklist` calc types |
 | Household bootstrap | `bootstrap_household()` RPC | `SECURITY DEFINER`; inserts `households` + `household_members` atomically — avoids RLS chicken-and-egg on first sign-in |
 | Days math | Pure functions in `shared/coverage.ts` | Testable via `pnpm test`; used on dashboard |
+| Water bottles | Bottles × fl oz → gallons | No new columns — `quantity` = bottle count, `unit` = `bottles`, `volume_per_unit` = gallons/bottle (`oz / 128`). UX presets 12 / 16.9 / 20 oz; juxtapose FEMA ~1 gal/person/day. Helpers in `shared/water-volume.ts`. |
 | Profiles table | `profiles.first_name` | Shown in header as “{name}'s plan”; signup + settings |
 | Migrations | See list below | Applied in Supabase SQL Editor |
 
@@ -290,3 +318,6 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | 2026-06 | Household invites — Settings sharing section, accept page, guest `member` role |
 | 2026-06 | Household coordination Phase A — Restock nav, roles (inventory keeper / shopper / watcher), shop runs |
 | 2026-07 | Solo owner first — prioritize owner maintenance UX; multi-role coordination progressive / advanced, not day-one focus |
+| 2026-07 | Solo loop UX — Dashboard = See / next action; Restock = plan trip → shop → log execution; no new Maintain page for v1 |
+| 2026-07 | Phase guide toons — optional, gear/avatar setting; never infer style from name; after solo loop UX |
+| 2026-07 | Water bottles — count × fl oz → gallons via existing `volume_per_unit`; FEMA juxtapose in inventory form |

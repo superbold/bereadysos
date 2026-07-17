@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ItemWithCategory } from '~/composables/useInventory'
+import { formatWaterInventoryLabel } from '#shared/water-volume'
 
 const toast = useToast()
 const { household, pending: householdPending, ensureHousehold, canEditInventory, isReadOnlyOnPlan } = useHousehold()
@@ -14,6 +15,14 @@ const {
   updateItem,
   deleteItem
 } = useInventory()
+
+/** FEMA-style water target: 1 gallon per person per day. */
+const waterTargetGallons = computed(() => {
+  if (!household.value) {
+    return null
+  }
+  return household.value.headcount * household.value.target_days
+})
 
 const search = ref('')
 const categoryFilter = ref<string>('all')
@@ -74,6 +83,9 @@ function closeForm() {
 }
 
 function formatQuantity(item: ItemWithCategory) {
+  if (item.category.slug === 'water') {
+    return formatWaterInventoryLabel(item)
+  }
   const qty = Number.isInteger(item.quantity) ? item.quantity : item.quantity.toFixed(1)
   return item.unit ? `${qty} ${item.unit}` : String(qty)
 }
@@ -130,6 +142,8 @@ async function onFormSubmit(payload: {
   category_id: string
   quantity: number
   unit: string | null
+  volume_per_unit: number | null
+  servings_per_unit: number | null
   expiration_date: string | null
   location: string | null
   notes: string | null
@@ -423,6 +437,7 @@ function closeDeleteModal() {
           :categories="categories"
           :item="editingItem"
           :saving="saving"
+          :water-target-gallons="waterTargetGallons"
           @submit="onFormSubmit"
           @cancel="closeForm"
         />
