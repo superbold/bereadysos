@@ -205,6 +205,19 @@ watch(waterEntryMode, (mode) => {
   }
 })
 
+watch(
+  state,
+  () => {
+    if (!submitHadErrors.value) {
+      return
+    }
+    if (schema.safeParse(state).success) {
+      submitHadErrors.value = false
+    }
+  },
+  { deep: true }
+)
+
 async function onFormError(event: FormErrorEvent) {
   submitHadErrors.value = true
   await nextTick()
