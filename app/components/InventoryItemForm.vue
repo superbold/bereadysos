@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as z from 'zod'
-import type { FormSubmitEvent } from '@nuxt/ui'
+import type { FormErrorEvent, FormSubmitEvent } from '@nuxt/ui'
 import type { Category, Item } from '~/types/database.types'
 import {
   formatGallons,
@@ -60,6 +60,19 @@ const state = reactive<Schema>({
 })
 
 const waterEntryMode = ref<WaterEntryMode>('bottles')
+const submitHadErrors = ref(false)
+
+const submitLabel = computed(() => {
+  if (submitHadErrors.value) {
+    return 'Fix required fields'
+  }
+  return props.item ? 'Save changes' : 'Add item'
+})
+
+const submitColor = computed(() => (submitHadErrors.value ? 'error' : 'primary'))
+const submitIcon = computed(() =>
+  submitHadErrors.value ? 'i-lucide-circle-x' : 'i-lucide-check'
+)
 
 const categoryOptions = computed(() =>
   props.categories.map(category => ({
@@ -104,6 +117,7 @@ const waterSummary = computed(() => {
 })
 
 function resetForNewItem() {
+  submitHadErrors.value = false
   state.name = ''
   state.category_id = props.categories[0]?.id ?? ''
   state.quantity = 1
@@ -116,6 +130,7 @@ function resetForNewItem() {
 }
 
 function loadItem(value: Item) {
+  submitHadErrors.value = false
   state.name = value.name
   state.category_id = value.category_id
   state.quantity = value.quantity
@@ -190,7 +205,20 @@ watch(waterEntryMode, (mode) => {
   }
 })
 
+async function onFormError(event: FormErrorEvent) {
+  submitHadErrors.value = true
+  await nextTick()
+  const firstErrorId = event.errors?.[0]?.id
+  if (!firstErrorId) {
+    return
+  }
+  const element = document.getElementById(firstErrorId)
+  element?.focus()
+  element?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
 function onSubmit(event: FormSubmitEvent<Schema>) {
+  submitHadErrors.value = false
   const category = props.categories.find(c => c.id === event.data.category_id)
   let quantity = event.data.quantity
   let unit = event.data.unit?.trim() || null
@@ -233,6 +261,7 @@ function onSubmit(event: FormSubmitEvent<Schema>) {
     :state="state"
     class="space-y-5"
     @submit="onSubmit"
+    @error="onFormError"
   >
     <UFormField
       label="Item name"
@@ -430,11 +459,12 @@ function onSubmit(event: FormSubmitEvent<Schema>) {
       />
       <UButton
         type="submit"
-        :label="item ? 'Save changes' : 'Add item'"
+        :label="submitLabel"
+        :color="submitColor"
         :loading="saving"
         block
         class="sm:w-auto"
-        trailing-icon="i-lucide-check"
+        :trailing-icon="submitIcon"
       />
     </div>
   </UForm>
