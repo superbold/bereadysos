@@ -276,6 +276,8 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | `20260625140000_household_invites.sql` | Invites, guest membership, sharing RPCs |
 | `20260625160000_household_coordination_enum.sql` | `member_role` enum: maintainer, shopper, watcher (run alone first) |
 | `20260625160100_household_coordination.sql` | Roles migration, shop runs, Restock |
+| `20260707120000_shop_run_intake.sql` | Intake RPCs, `intake_submitted_at` |
+| `20260717120000_solo_restock_complete.sql` | `complete_solo_restock_run` — apply intake to inventory, close run |
 
 ### Tables
 

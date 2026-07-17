@@ -194,6 +194,21 @@ export function useShopRuns() {
     return { data, error: null }
   }
 
+  async function completeSoloRestock(runId: string) {
+    working.value = true
+    const { data, error } = await supabase.rpc('complete_solo_restock_run', {
+      p_run_id: runId
+    })
+    working.value = false
+
+    if (error) {
+      return { data: null, error }
+    }
+
+    await loadRuns()
+    return { data, error: null }
+  }
+
   const shoppingCompleteRun = computed(() =>
     runs.value.find(run => run.status === 'shopping_complete') ?? null
   )
@@ -216,6 +231,14 @@ export function useShopRuns() {
 
   const coordinationBanner = computed(() => {
     if (shoppingCompleteRun.value) {
+      if (isHouseholdOwner.value) {
+        return {
+          color: 'warning' as const,
+          title: 'Shopping done — log what you bought',
+          description: 'Open Restock to record what came home and update your inventory.',
+          to: '/restock'
+        }
+      }
       if (canEditInventory.value) {
         return {
           color: 'warning' as const,
@@ -233,6 +256,14 @@ export function useShopRuns() {
     }
 
     if (intakeRun.value && canEditInventory.value) {
+      if (isHouseholdOwner.value) {
+        return {
+          color: 'primary' as const,
+          title: 'Finish your restock',
+          description: 'Log each item on Restock, then update inventory when done.',
+          to: '/restock'
+        }
+      }
       return {
         color: 'primary' as const,
         title: 'Intake in progress',
@@ -244,8 +275,8 @@ export function useShopRuns() {
     if (submittedIntakeRun.value && isHouseholdOwner.value) {
       return {
         color: 'primary' as const,
-        title: 'Intake ready for your review',
-        description: 'The inventory keeper submitted their log. Owner review is coming in the next update.',
+        title: 'Ready to update inventory',
+        description: 'Your restock log is complete. Apply it to inventory on Restock.',
         to: '/restock'
       }
     }
@@ -276,6 +307,7 @@ export function useShopRuns() {
     completeShopping,
     startIntake,
     updateLineIntake,
-    submitIntake
+    submitIntake,
+    completeSoloRestock
   }
 }

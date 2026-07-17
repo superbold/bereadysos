@@ -432,6 +432,10 @@ export type Database = {
         Args: { p_run_id: string }
         Returns: Database['public']['Tables']['shop_runs']['Row']
       }
+      complete_solo_restock_run: {
+        Args: { p_run_id: string }
+        Returns: Database['public']['Tables']['shop_runs']['Row']
+      }
     }
     Enums: {
       calc_type: 'consumable' | 'checklist'

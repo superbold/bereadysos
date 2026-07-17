@@ -31,6 +31,7 @@ const {
   startIntake,
   updateLineIntake,
   submitIntake,
+  completeSoloRestock,
   shoppingCompleteRun,
   intakeRun,
   submittedIntakeRun,
@@ -39,6 +40,9 @@ const {
 
 const completeNote = ref('')
 const savingLineId = ref<string | null>(null)
+
+/** Owners use the solo restock path (list → shop → log → update inventory). */
+const soloOwnerMode = computed(() => isHouseholdOwner.value)
 
 const isLoading = computed(() =>
   householdPending.value || (inventoryPending.value && !items.value.length && !isReadOnlyOnPlan.value)
@@ -72,12 +76,37 @@ const hasActiveCoordinationRun = computed(() =>
   !!(draftRun.value || shoppingRun.value || shoppingCompleteRun.value || intakeRun.value || submittedIntakeRun.value)
 )
 
-const statusLabels: Record<string, string> = {
+const coordinationStatusLabels: Record<string, string> = {
   draft: 'Draft',
   shopping: 'Shopping in progress',
   shopping_complete: 'Awaiting intake',
   intake_pending: 'Intake in progress',
   closed: 'Closed'
+}
+
+const soloStatusLabels: Record<string, string> = {
+  draft: 'List ready',
+  shopping: 'At the store',
+  shopping_complete: 'Ready to log',
+  intake_pending: 'Log what you bought',
+  closed: 'Complete'
+}
+
+const statusLabels = computed(() =>
+  soloOwnerMode.value ? soloStatusLabels : coordinationStatusLabels
+)
+
+function runStatusLabel(run: { status: string, intake_submitted_at: string | null }) {
+  if (run.status === 'closed') {
+    return statusLabels.value.closed
+  }
+  if (run.intake_submitted_at && !soloOwnerMode.value) {
+    return 'Awaiting owner review'
+  }
+  if (run.intake_submitted_at && soloOwnerMode.value) {
+    return 'Ready to update inventory'
+  }
+  return statusLabels.value[run.status] ?? run.status
 }
 
 async function loadData() {
@@ -151,8 +180,10 @@ async function onStartShopping(runId: string) {
   }
 
   toast.add({
-    title: 'Shopping started',
-    description: 'The list is ready for your shopper.',
+    title: soloOwnerMode.value ? 'Shopping list ready' : 'Shopping started',
+    description: soloOwnerMode.value
+      ? 'Use this list at the store, then mark shopping done when you return.'
+      : 'The list is ready for your shopper.',
     color: 'success',
     icon: 'i-lucide-play'
   })
@@ -168,6 +199,27 @@ async function onCompleteShopping(runId: string) {
       description: error.message,
       color: 'error',
       icon: 'i-lucide-circle-alert'
+    })
+    return
+  }
+
+  if (soloOwnerMode.value) {
+    const intakeError = (await startIntake(runId)).error
+    if (intakeError) {
+      toast.add({
+        title: 'Shopping done — could not open log',
+        description: intakeError.message,
+        color: 'error',
+        icon: 'i-lucide-circle-alert'
+      })
+      return
+    }
+
+    toast.add({
+      title: 'Shopping done',
+      description: 'Log what you bought below, then update your inventory.',
+      color: 'success',
+      icon: 'i-lucide-check-circle'
     })
     return
   }
@@ -194,7 +246,9 @@ async function onStartIntake(runId: string) {
 
   toast.add({
     title: 'Intake started',
-    description: 'Log each item below — inventory is not updated until the owner reviews.',
+    description: soloOwnerMode.value
+      ? 'Log each item below, then update your inventory.'
+      : 'Log each item below — inventory is not updated until the owner reviews.',
     color: 'success',
     icon: 'i-lucide-package-open'
   })
@@ -249,6 +303,28 @@ async function onSubmitIntake(runId: string) {
     icon: 'i-lucide-send'
   })
 }
+
+async function onCompleteSoloRestock(runId: string) {
+  const { error } = await completeSoloRestock(runId)
+  if (error) {
+    toast.add({
+      title: 'Could not update inventory',
+      description: error.message,
+      color: 'error',
+      icon: 'i-lucide-circle-alert'
+    })
+    return
+  }
+
+  await fetchItems()
+
+  toast.add({
+    title: 'Inventory updated',
+    description: 'Your restock is complete. Check Dashboard or Plan for updated coverage.',
+    color: 'success',
+    icon: 'i-lucide-check-circle'
+  })
+}
 </script>
 
 <template>
@@ -258,7 +334,12 @@ async function onSubmitIntake(runId: string) {
         Restock
       </h1>
       <p class="mt-1 text-sm text-muted">
-        Coordinate shopping and intake — plan owner, shopper, and inventory keeper working together.
+        <template v-if="soloOwnerMode">
+          Turn plan gaps into a shopping list, log what you bought, and update your inventory.
+        </template>
+        <template v-else>
+          Coordinate shopping and intake — plan owner, shopper, and inventory keeper working together.
+        </template>
       </p>
     </div>
 
@@ -298,7 +379,12 @@ async function onSubmitIntake(runId: string) {
             Start a run
           </h2>
           <p class="mt-1 text-sm text-muted">
-            Build a shopping list from plan gaps, then hand off to your shopper.
+            <template v-if="soloOwnerMode">
+              Build a shopping list from what your plan still needs.
+            </template>
+            <template v-else>
+              Build a shopping list from plan gaps, then hand off to your shopper.
+            </template>
           </p>
         </div>
 
@@ -345,13 +431,13 @@ async function onSubmitIntake(runId: string) {
               {{ draftRun.title }}
             </h2>
             <p class="mt-1 text-sm text-muted">
-              {{ statusLabels[draftRun.status] }} &middot; {{ draftRun.lines.length }} items
+              {{ runStatusLabel(draftRun) }} &middot; {{ draftRun.lines.length }} items
             </p>
           </div>
           <UButton
             v-if="isHouseholdOwner && draftRun.lines.length"
-            label="Send to shopper"
-            icon="i-lucide-send"
+            :label="soloOwnerMode ? 'Start shopping' : 'Send to shopper'"
+            :icon="soloOwnerMode ? 'i-lucide-shopping-cart' : 'i-lucide-send'"
             size="sm"
             :loading="working"
             @click="onStartShopping(draftRun.id)"
@@ -395,7 +481,7 @@ async function onSubmitIntake(runId: string) {
             {{ shoppingRun.title }}
           </h2>
           <p class="mt-1 text-sm text-muted">
-            {{ statusLabels[shoppingRun.status] }}
+            {{ runStatusLabel(shoppingRun) }}
           </p>
         </div>
 
@@ -420,12 +506,14 @@ async function onSubmitIntake(runId: string) {
         >
           <UTextarea
             v-model="completeNote"
-            placeholder="Optional note for the inventory keeper (substitutions, out of stock…)"
+            :placeholder="soloOwnerMode
+              ? 'Optional note (substitutions, out of stock…)'
+              : 'Optional note for the inventory keeper (substitutions, out of stock…)'"
             :rows="2"
             autoresize
           />
           <UButton
-            label="Mark shopping complete"
+            :label="soloOwnerMode ? 'Done shopping' : 'Mark shopping complete'"
             icon="i-lucide-check-circle"
             :loading="working"
             @click="onCompleteShopping(shoppingRun.id)"
@@ -439,10 +527,13 @@ async function onSubmitIntake(runId: string) {
       >
         <div>
           <h2 class="text-sm font-semibold text-highlighted">
-            Shopping complete — ready for intake
+            {{ soloOwnerMode ? 'Shopping done' : 'Shopping complete — ready for intake' }}
           </h2>
           <p class="mt-1 text-sm text-muted">
-            <template v-if="canEditInventory">
+            <template v-if="soloOwnerMode && canEditInventory">
+              Log what you bought, then update your inventory.
+            </template>
+            <template v-else-if="canEditInventory">
               Log what actually came in. Inventory stays unchanged until the owner reviews.
             </template>
             <template v-else>
@@ -475,7 +566,7 @@ async function onSubmitIntake(runId: string) {
 
         <UButton
           v-if="canEditInventory"
-          label="Start intake"
+          :label="soloOwnerMode ? 'Log what you bought' : 'Start intake'"
           icon="i-lucide-package-open"
           :loading="working"
           @click="onStartIntake(shoppingCompleteRun.id)"
@@ -488,10 +579,13 @@ async function onSubmitIntake(runId: string) {
       >
         <div>
           <h2 class="text-sm font-semibold text-highlighted">
-            Log intake
+            {{ soloOwnerMode ? 'Log what you bought' : 'Log intake' }}
           </h2>
           <p class="mt-1 text-sm text-muted">
-            <template v-if="canEditInventory">
+            <template v-if="soloOwnerMode && canEditInventory">
+              Record what you bought, substituted, or skipped. Then update your inventory.
+            </template>
+            <template v-else-if="canEditInventory">
               Record bought, substituted, or skipped for each line. Submit when done — the owner will review before inventory updates.
             </template>
             <template v-else>
@@ -504,7 +598,7 @@ async function onSubmitIntake(runId: string) {
           v-if="intakeRun.shopping_note"
           class="text-sm text-highlighted"
         >
-          Shopper note: {{ intakeRun.shopping_note }}
+          {{ soloOwnerMode ? 'Note:' : 'Shopper note:' }} {{ intakeRun.shopping_note }}
         </p>
 
         <ul
@@ -548,7 +642,15 @@ async function onSubmitIntake(runId: string) {
         </ul>
 
         <UButton
-          v-if="canEditInventory"
+          v-if="soloOwnerMode && canEditInventory"
+          label="Update inventory"
+          icon="i-lucide-package-check"
+          :disabled="!intakeReadyToSubmit"
+          :loading="working"
+          @click="onCompleteSoloRestock(intakeRun.id)"
+        />
+        <UButton
+          v-else-if="canEditInventory"
           label="Submit for owner review"
           icon="i-lucide-send"
           :disabled="!intakeReadyToSubmit"
@@ -563,10 +665,13 @@ async function onSubmitIntake(runId: string) {
       >
         <div>
           <h2 class="text-sm font-semibold text-highlighted">
-            Intake submitted
+            {{ soloOwnerMode ? 'Ready to update inventory' : 'Intake submitted' }}
           </h2>
           <p class="mt-1 text-sm text-muted">
-            <template v-if="isHouseholdOwner">
+            <template v-if="soloOwnerMode">
+              Your restock log is complete. Apply it to inventory to close this run.
+            </template>
+            <template v-else-if="isHouseholdOwner">
               The inventory keeper finished logging. Owner accept / send-back review is coming in the next update.
             </template>
             <template v-else>
@@ -583,6 +688,14 @@ async function onSubmitIntake(runId: string) {
             readonly
           />
         </ul>
+
+        <UButton
+          v-if="soloOwnerMode"
+          label="Update inventory"
+          icon="i-lucide-package-check"
+          :loading="working"
+          @click="onCompleteSoloRestock(submittedIntakeRun.id)"
+        />
       </section>
 
       <section v-if="runs.length">
@@ -600,13 +713,7 @@ async function onSubmitIntake(runId: string) {
                 {{ run.title }}
               </p>
               <p class="text-sm text-muted">
-                <template v-if="run.intake_submitted_at">
-                  Awaiting owner review
-                </template>
-                <template v-else>
-                  {{ statusLabels[run.status] }}
-                </template>
-                &middot; {{ run.lines.length }} items
+                {{ runStatusLabel(run) }} &middot; {{ run.lines.length }} items
               </p>
             </div>
             <p class="text-xs text-muted">

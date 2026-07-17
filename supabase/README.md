@@ -48,6 +48,8 @@ Run `migrations/20260625160100_household_coordination.sql` second — roles migr
 
 Run `migrations/20260707120000_shop_run_intake.sql` — Phase B intake RPCs (`start_shop_run_intake`, `update_shop_run_line_intake`, `submit_shop_run_intake`) and `intake_submitted_at` on `shop_runs`.
 
+Run `migrations/20260717120000_solo_restock_complete.sql` — Solo owner Ticket 2: `complete_solo_restock_run` applies logged intake lines to inventory and closes the run.
+
 ### Migration file names
 
 Files use `YYYYMMDDHHMMSS_description.sql` — the prefix is the **date the migration was authored**, not when you run it in Supabase. New migrations should use today’s timestamp; do not rename files after they have been applied.
