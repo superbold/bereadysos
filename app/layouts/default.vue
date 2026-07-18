@@ -14,6 +14,16 @@ function isActiveNavItem(to: string) {
   return route.path === to
 }
 
+const mobileNavItems = computed(() => [
+  ...navItems.map(item => ({
+    label: item.label,
+    icon: item.icon,
+    to: item.to,
+    active: isActiveNavItem(item.to)
+  })),
+  { label: 'Settings', icon: 'i-lucide-settings', to: '/settings', active: isActiveNavItem('/settings') }
+])
+
 async function signOut() {
   const supabase = useSupabaseClient()
   await supabase.auth.signOut()
@@ -100,6 +110,26 @@ async function signOut() {
           variant="soft"
           size="sm"
         />
+      </template>
+
+      <template #body>
+        <nav v-if="user">
+          <UNavigationMenu
+            :items="mobileNavItems"
+            orientation="vertical"
+            class="-mx-2.5"
+          />
+          <USeparator class="my-3" />
+          <UButton
+            label="Sign out"
+            icon="i-lucide-log-out"
+            color="neutral"
+            variant="ghost"
+            block
+            class="justify-start"
+            @click="signOut"
+          />
+        </nav>
       </template>
     </UHeader>
 
