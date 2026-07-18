@@ -10,7 +10,9 @@ import {
   effectiveConsumableAmount,
   formatGapDetail,
   formatGapLabel,
+  listAttentionExpiringItems,
   listExpiringItems,
+  needsExpirationAttention,
   TARGET_DAY_PRESETS
 } from '../shared/coverage.ts'
 
@@ -181,6 +183,20 @@ describe('expiration helpers', () => {
     assert.equal(listed.length, 1)
     assert.equal(listed[0]?.name, 'Soon')
     assert.equal(listed[0]?.daysUntil, 6)
+  })
+
+  it('lists expired and soon items for attention', () => {
+    const listed = listAttentionExpiringItems(items, referenceDate, 30)
+    assert.equal(listed.length, 2)
+    assert.equal(listed[0]?.name, 'Past')
+    assert.equal(listed[1]?.name, 'Soon')
+  })
+
+  it('needsExpirationAttention covers expired and soon dates', () => {
+    assert.equal(needsExpirationAttention('2026-06-01', referenceDate), true)
+    assert.equal(needsExpirationAttention('2026-07-01', referenceDate), true)
+    assert.equal(needsExpirationAttention('2026-08-01', referenceDate), false)
+    assert.equal(needsExpirationAttention(null, referenceDate), false)
   })
 })
 

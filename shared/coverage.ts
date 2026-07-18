@@ -332,6 +332,38 @@ export function listExpiringItems(
     .slice(0, limit)
 }
 
+/** Expired or within the expiring-soon window (needs rotation attention). */
+export function needsExpirationAttention(
+  expirationDate: string | null | undefined,
+  referenceDate = new Date(),
+  withinDays = EXPIRING_SOON_DAYS
+) {
+  if (!expirationDate) {
+    return false
+  }
+  const daysUntil = daysBetween(referenceDate, new Date(`${expirationDate}T12:00:00`))
+  return daysUntil <= withinDays
+}
+
+/** Expired + soon items for Dashboard “This week” expand (soonest / most overdue first). */
+export function listAttentionExpiringItems(
+  items: Array<ItemForCoverage & { id: string, categoryName: string }>,
+  referenceDate = new Date(),
+  withinDays = EXPIRING_SOON_DAYS
+): ExpiringItem[] {
+  return items
+    .filter((item): item is typeof item & { expiration_date: string } => Boolean(item.expiration_date))
+    .map(item => ({
+      id: item.id,
+      name: item.name,
+      expiration_date: item.expiration_date,
+      daysUntil: daysBetween(referenceDate, new Date(`${item.expiration_date}T12:00:00`)),
+      categoryName: item.categoryName
+    }))
+    .filter(item => item.daysUntil <= withinDays)
+    .sort((a, b) => a.daysUntil - b.daysUntil || a.name.localeCompare(b.name))
+}
+
 export function formatQuantity(value: number, maxDecimals = 1) {
   if (Number.isInteger(value)) {
     return String(value)
@@ -448,7 +480,7 @@ export function computeExpirationAlerts(
         icon: 'i-lucide-calendar-x',
         title: item.name,
         detail: `Expired ${daysAgo} day${daysAgo === 1 ? '' : 's'} ago · ${item.categoryName}`,
-        href: '/expiring',
+        href: `/expiring?item=${item.id}`,
         itemId: item.id
       })
       continue
@@ -462,7 +494,7 @@ export function computeExpirationAlerts(
         icon: 'i-lucide-calendar-clock',
         title: item.name,
         detail: formatExpirationAlertDetail(daysUntil, item.categoryName),
-        href: '/expiring',
+        href: `/expiring?item=${item.id}`,
         itemId: item.id
       })
     }

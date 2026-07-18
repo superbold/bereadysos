@@ -4,7 +4,7 @@ import {
   computeAllCategoryGaps,
   countExpired,
   countExpiringSoon,
-  listExpiringItems,
+  listAttentionExpiringItems,
   TARGET_DAY_PRESETS
 } from '#shared/coverage'
 import {
@@ -40,6 +40,7 @@ const {
 
 const authReady = ref(import.meta.server)
 const savingTargetDays = ref(false)
+const thisWeekItemsExpanded = ref(false)
 
 const targetPresets = TARGET_DAY_PRESETS
 
@@ -99,7 +100,7 @@ const openGaps = computed(() => {
 
 const expiringSoonCount = computed(() => countExpiringSoon(coverageItems.value))
 const expiredCount = computed(() => countExpired(coverageItems.value))
-const upcomingExpiring = computed(() => listExpiringItems(coverageItems.value))
+const attentionExpiringItems = computed(() => listAttentionExpiringItems(coverageItems.value))
 
 const draftRun = computed(() => runs.value.find(run => run.status === 'draft') ?? null)
 const shoppingRun = computed(() => runs.value.find(run => run.status === 'shopping') ?? null)
@@ -128,10 +129,44 @@ const ownerNextAction = computed(() => {
   })
 })
 
+const thisWeekIsExpiration = computed(() =>
+  ownerNextAction.value?.id === 'expired' || ownerNextAction.value?.id === 'expiring'
+)
+
 /** Helpers still get the coordination banner; owners use the next-action card. */
 const showCoordinationBanner = computed(() =>
   !!coordinationBanner.value && !isHouseholdOwner.value
 )
+
+watch(ownerNextAction, (action) => {
+  if (action?.id !== 'expired' && action?.id !== 'expiring') {
+    thisWeekItemsExpanded.value = false
+  }
+})
+
+function onThisWeekCta() {
+  if (thisWeekIsExpiration.value) {
+    thisWeekItemsExpanded.value = !thisWeekItemsExpanded.value
+    return
+  }
+  if (ownerNextAction.value?.href) {
+    navigateTo(ownerNextAction.value.href)
+  }
+}
+
+function formatExpiringLabel(daysUntil: number) {
+  if (daysUntil < 0) {
+    const daysAgo = Math.abs(daysUntil)
+    return `Expired ${daysAgo} day${daysAgo === 1 ? '' : 's'} ago`
+  }
+  if (daysUntil === 0) {
+    return 'Expires today'
+  }
+  if (daysUntil === 1) {
+    return 'Expires tomorrow'
+  }
+  return `Expires in ${daysUntil} days`
+}
 
 async function loadDashboardData() {
   await fetchCategories()
@@ -178,16 +213,6 @@ async function applyTargetDays(days: number) {
     color: 'success',
     icon: 'i-lucide-check-circle'
   })
-}
-
-function formatExpiringLabel(daysUntil: number) {
-  if (daysUntil === 0) {
-    return 'Expires today'
-  }
-  if (daysUntil === 1) {
-    return 'Expires tomorrow'
-  }
-  return `Expires in ${daysUntil} days`
 }
 </script>
 
@@ -243,14 +268,44 @@ function formatExpiringLabel(daysUntil: number) {
         >
           <template #actions>
             <UButton
-              :to="ownerNextAction.href"
-              :label="ownerNextAction.ctaLabel"
+              :label="thisWeekIsExpiration
+                ? (thisWeekItemsExpanded ? 'Hide items' : ownerNextAction.ctaLabel)
+                : ownerNextAction.ctaLabel"
               size="sm"
               :color="ownerNextAction.severity === 'success' ? 'neutral' : 'primary'"
               :variant="ownerNextAction.severity === 'success' ? 'outline' : 'solid'"
+              :trailing-icon="thisWeekIsExpiration
+                ? (thisWeekItemsExpanded ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down')
+                : undefined"
+              @click="onThisWeekCta"
             />
           </template>
         </UAlert>
+
+        <ul
+          v-if="thisWeekIsExpiration && thisWeekItemsExpanded && attentionExpiringItems.length"
+          class="mt-3 divide-y divide-default overflow-hidden rounded-lg border border-default"
+        >
+          <li
+            v-for="item in attentionExpiringItems"
+            :key="item.id"
+          >
+            <NuxtLink
+              :to="`/expiring?item=${item.id}`"
+              class="flex items-center justify-between gap-3 px-3 py-3 text-sm transition-colors hover:bg-elevated/60"
+            >
+              <span class="min-w-0 truncate font-medium text-highlighted">
+                {{ item.name }}
+              </span>
+              <span
+                class="shrink-0"
+                :class="item.daysUntil < 0 ? 'text-error' : 'text-warning'"
+              >
+                {{ formatExpiringLabel(item.daysUntil) }}
+              </span>
+            </NuxtLink>
+          </li>
+        </ul>
       </section>
 
       <UAlert
@@ -300,7 +355,7 @@ function formatExpiringLabel(daysUntil: number) {
       </section>
 
       <section
-        v-if="expiredCount || expiringSoonCount"
+        v-if="(expiredCount || expiringSoonCount) && !thisWeekIsExpiration"
         class="mb-8 rounded-lg border border-default p-4"
       >
         <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -320,41 +375,38 @@ function formatExpiringLabel(daysUntil: number) {
               </template>
             </p>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <UButton
-              to="/inventory"
-              label="Review inventory"
-              icon="i-lucide-package"
-              color="neutral"
-              variant="outline"
-              size="sm"
-            />
-            <UButton
-              to="/expiring"
-              label="View expiring"
-              icon="i-lucide-calendar-clock"
-              color="neutral"
-              variant="soft"
-              size="sm"
-            />
-          </div>
+          <UButton
+            to="/expiring"
+            label="View expiring"
+            icon="i-lucide-calendar-clock"
+            color="neutral"
+            variant="soft"
+            size="sm"
+          />
         </div>
 
         <ul
-          v-if="upcomingExpiring.length"
+          v-if="attentionExpiringItems.length"
           class="mt-4 divide-y divide-default rounded-lg border border-default"
         >
           <li
-            v-for="item in upcomingExpiring"
+            v-for="item in attentionExpiringItems.slice(0, 5)"
             :key="item.id"
-            class="flex items-center justify-between gap-3 px-3 py-2 text-sm"
           >
-            <span class="truncate text-highlighted">
-              {{ item.name }}
-            </span>
-            <span class="shrink-0 text-warning">
-              {{ formatExpiringLabel(item.daysUntil) }}
-            </span>
+            <NuxtLink
+              :to="`/expiring?item=${item.id}`"
+              class="flex items-center justify-between gap-3 px-3 py-2 text-sm transition-colors hover:bg-elevated/60"
+            >
+              <span class="truncate text-highlighted">
+                {{ item.name }}
+              </span>
+              <span
+                class="shrink-0"
+                :class="item.daysUntil < 0 ? 'text-error' : 'text-warning'"
+              >
+                {{ formatExpiringLabel(item.daysUntil) }}
+              </span>
+            </NuxtLink>
           </li>
         </ul>
       </section>

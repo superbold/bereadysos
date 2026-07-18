@@ -51,6 +51,7 @@ describe('computeExpirationAlerts', () => {
     assert.equal(alerts[0]?.severity, 'error')
     assert.equal(alerts[0]?.icon, 'i-lucide-calendar-x')
     assert.match(alerts[0]?.detail ?? '', /Expired 5 days ago/)
+    assert.equal(alerts[0]?.href, '/expiring?item=item-1')
   })
 
   it('creates warning alerts for items expiring within 30 days', () => {

@@ -149,7 +149,7 @@ export function computeOwnerNextAction(input: ComputeOwnerNextActionInput): Owne
       id: 'expired',
       title: expiredCount === 1 ? 'Review 1 expired item' : `Review ${expiredCount} expired items`,
       detail: 'Replace or remove expired supplies so your plan stays accurate.',
-      ctaLabel: 'View expiring',
+      ctaLabel: expiredCount === 1 ? 'Show item' : 'Show items',
       href: '/expiring',
       severity: 'error',
       icon: 'i-lucide-calendar-x'
@@ -163,7 +163,7 @@ export function computeOwnerNextAction(input: ComputeOwnerNextActionInput): Owne
         ? '1 item expiring soon'
         : `${expiringSoonCount} items expiring soon`,
       detail: 'Rotate or replace items within 30 days so nothing slips past.',
-      ctaLabel: 'View expiring',
+      ctaLabel: expiringSoonCount === 1 ? 'Show item' : 'Show items',
       href: '/expiring',
       severity: 'warning',
       icon: 'i-lucide-calendar-clock'

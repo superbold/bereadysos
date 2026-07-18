@@ -1,8 +1,25 @@
 <script setup lang="ts">
-import { EXPIRING_SOON_DAYS } from '#shared/coverage'
+import { EXPIRING_SOON_DAYS, needsExpirationAttention } from '#shared/coverage'
+import type { ItemWithCategory } from '~/composables/useInventory'
 
-const { household, ensureHousehold } = useHousehold()
-const { items, pending, error, fetchCategories, fetchItems } = useInventory()
+const route = useRoute()
+const router = useRouter()
+const toast = useToast()
+const {
+  household,
+  ensureHousehold,
+  canEditInventory,
+  isReadOnlyOnPlan
+} = useHousehold()
+const {
+  categories,
+  items,
+  pending,
+  error,
+  fetchCategories,
+  fetchItems,
+  updateItem
+} = useInventory()
 
 type ExpiringRow = {
   id: string
@@ -15,6 +32,17 @@ type ExpiringRow = {
 }
 
 const sortBy = ref<'date' | 'name' | 'category'>('date')
+const editingItem = ref<ItemWithCategory | null>(null)
+const saving = ref(false)
+const editorEl = ref<HTMLElement | null>(null)
+const leftAttentionBanner = ref<{ name: string } | null>(null)
+
+const waterTargetGallons = computed(() => {
+  if (!household.value) {
+    return null
+  }
+  return household.value.headcount * household.value.target_days
+})
 
 onMounted(async () => {
   if (!household.value) {
@@ -22,6 +50,20 @@ onMounted(async () => {
   }
   await fetchCategories()
   await fetchItems()
+  await openFromQuery()
+})
+
+watch(
+  () => route.query.item,
+  async () => {
+    await openFromQuery()
+  }
+)
+
+watch(items, async () => {
+  if (route.query.item && !editingItem.value) {
+    await openFromQuery()
+  }
 })
 
 const coverageItems = computed(() =>
@@ -133,6 +175,104 @@ const sortOptions = [
   { label: 'Item name', value: 'name' },
   { label: 'Category', value: 'category' }
 ]
+
+async function openFromQuery() {
+  const raw = route.query.item
+  const itemId = typeof raw === 'string' ? raw : Array.isArray(raw) ? raw[0] : null
+  if (!itemId) {
+    return
+  }
+  const match = items.value.find(item => item.id === itemId)
+  if (!match) {
+    return
+  }
+  await selectItem(match.id)
+}
+
+async function selectItem(id: string) {
+  leftAttentionBanner.value = null
+  const match = items.value.find(item => item.id === id) ?? null
+  if (!match) {
+    return
+  }
+  if (!canEditInventory.value) {
+    toast.add({
+      title: 'Read-only access',
+      description: 'You can view expiration dates but cannot edit items on this plan.',
+      color: 'warning',
+      icon: 'i-lucide-eye'
+    })
+    return
+  }
+  editingItem.value = match
+  await router.replace({ query: { ...route.query, item: id } })
+  await nextTick()
+  editorEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function closeEditor() {
+  editingItem.value = null
+  const query = { ...route.query }
+  delete query.item
+  router.replace({ query })
+}
+
+async function onFormSubmit(payload: {
+  name: string
+  category_id: string
+  quantity: number
+  unit: string | null
+  volume_per_unit: number | null
+  servings_per_unit: number | null
+  expiration_date: string | null
+  location: string | null
+  notes: string | null
+}) {
+  if (!editingItem.value) {
+    return
+  }
+
+  const previousName = editingItem.value.name
+  const wasAttention = needsExpirationAttention(editingItem.value.expiration_date)
+
+  saving.value = true
+  const { error: updateError } = await updateItem(editingItem.value.id, payload)
+  saving.value = false
+
+  if (updateError) {
+    toast.add({
+      title: 'Could not save item',
+      description: updateError.message,
+      color: 'error',
+      icon: 'i-lucide-circle-alert'
+    })
+    return
+  }
+
+  const stillAttention = needsExpirationAttention(payload.expiration_date)
+  closeEditor()
+
+  if (wasAttention && !stillAttention) {
+    leftAttentionBanner.value = { name: previousName }
+    toast.add({
+      title: 'No longer on the expiring list',
+      description: `${previousName} is current — find it in Inventory.`,
+      color: 'success',
+      icon: 'i-lucide-circle-check'
+    })
+    return
+  }
+
+  toast.add({
+    title: 'Item updated',
+    color: 'success',
+    icon: 'i-lucide-check-circle'
+  })
+}
+
+function dismissLeftAttentionBanner() {
+  leftAttentionBanner.value = null
+}
 </script>
 
 <template>
@@ -154,6 +294,48 @@ const sortOptions = [
         variant="outline"
         class="shrink-0"
       />
+    </div>
+
+    <UAlert
+      v-if="isReadOnlyOnPlan"
+      color="primary"
+      icon="i-lucide-eye"
+      title="Read-only access"
+      description="You can view expiration dates but cannot edit items on this plan."
+      variant="subtle"
+      class="mb-6"
+    />
+
+    <div
+      v-if="leftAttentionBanner"
+      class="expiring-cleared mb-6"
+      role="status"
+    >
+      <UAlert
+        color="success"
+        icon="i-lucide-party-popper"
+        :title="`“${leftAttentionBanner.name}” is no longer expiring`"
+        description="It’s current now — open Inventory anytime to review or adjust it."
+        variant="subtle"
+        class="expiring-cleared__alert"
+      >
+        <template #actions>
+          <UButton
+            to="/inventory"
+            label="Go to Inventory"
+            icon="i-lucide-package"
+            size="sm"
+            color="primary"
+          />
+          <UButton
+            label="Dismiss"
+            size="sm"
+            color="neutral"
+            variant="ghost"
+            @click="dismissLeftAttentionBanner"
+          />
+        </template>
+      </UAlert>
     </div>
 
     <div
@@ -201,6 +383,40 @@ const sortOptions = [
     </div>
 
     <template v-else>
+      <div
+        v-if="editingItem"
+        ref="editorEl"
+        class="mb-8 rounded-lg border border-primary/30 bg-primary/5 p-4"
+      >
+        <div class="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-sm font-semibold text-highlighted">
+              Update {{ editingItem.name }}
+            </h2>
+            <p class="mt-1 text-sm text-muted">
+              Change the date, quantity, or replace this supply. Saving a later date removes it from the expiring list.
+            </p>
+          </div>
+          <UButton
+            icon="i-lucide-x"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            aria-label="Close editor"
+            @click="closeEditor"
+          />
+        </div>
+        <InventoryItemForm
+          v-if="categories.length"
+          :categories="categories"
+          :item="editingItem"
+          :saving="saving"
+          :water-target-gallons="waterTargetGallons"
+          @submit="onFormSubmit"
+          @cancel="closeEditor"
+        />
+      </div>
+
       <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p class="text-sm text-muted">
           {{ itemsWithDates }} item{{ itemsWithDates === 1 ? '' : 's' }} with dates
@@ -209,6 +425,9 @@ const sortOptions = [
           </template>
           <template v-if="expiringSoonItems.length">
             · {{ expiringSoonItems.length }} within 30 days
+          </template>
+          <template v-if="canEditInventory">
+            · tap an item to update
           </template>
         </p>
         <USelect
@@ -230,6 +449,9 @@ const sortOptions = [
           :format-date="formatDate"
           :format-days-label="formatDaysLabel"
           :row-tone="rowTone"
+          :selected-id="editingItem?.id"
+          :clickable="canEditInventory"
+          @select="selectItem"
         />
       </section>
 
@@ -245,6 +467,9 @@ const sortOptions = [
           :format-date="formatDate"
           :format-days-label="formatDaysLabel"
           :row-tone="rowTone"
+          :selected-id="editingItem?.id"
+          :clickable="canEditInventory"
+          @select="selectItem"
         />
       </section>
 
@@ -257,8 +482,36 @@ const sortOptions = [
           :format-date="formatDate"
           :format-days-label="formatDaysLabel"
           :row-tone="rowTone"
+          :selected-id="editingItem?.id"
+          :clickable="canEditInventory"
+          @select="selectItem"
         />
       </section>
     </template>
   </div>
 </template>
+
+<style scoped>
+.expiring-cleared {
+  animation: expiring-cleared-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.expiring-cleared__alert {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ui-success) 35%, transparent);
+}
+
+@keyframes expiring-cleared-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(-0.75rem) scale(0.97);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0.1rem) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+</style>

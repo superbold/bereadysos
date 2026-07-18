@@ -100,6 +100,7 @@ describe('computeOwnerNextAction', () => {
     })
     assert.equal(action.id, 'expired')
     assert.equal(action.href, '/expiring')
+    assert.equal(action.ctaLabel, 'Show item')
   })
 
   it('surfaces expiring when stocked and no gaps', () => {
@@ -113,6 +114,7 @@ describe('computeOwnerNextAction', () => {
     })
     assert.equal(action.id, 'expiring')
     assert.match(action.title, /2 items/)
+    assert.equal(action.ctaLabel, 'Show items')
   })
 
   it('returns on-target all-clear', () => {
