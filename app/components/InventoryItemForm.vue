@@ -276,30 +276,33 @@ function onSubmit(event: FormSubmitEvent<Schema>) {
     @submit="onSubmit"
     @error="onFormError"
   >
-    <UFormField
-      label="Item name"
-      name="name"
-      required
-    >
-      <UInput
-        v-model="state.name"
-        placeholder="e.g. Bottled water, first aid kit"
-        autocomplete="off"
-      />
-    </UFormField>
+    <div class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(12rem,16rem)]">
+      <UFormField
+        label="Item name"
+        name="name"
+        required
+      >
+        <UInput
+          v-model="state.name"
+          placeholder="e.g. Bottled water, first aid kit"
+          autocomplete="off"
+          class="w-full"
+        />
+      </UFormField>
 
-    <UFormField
-      label="Category"
-      name="category_id"
-      required
-    >
-      <USelect
-        v-model="state.category_id"
-        :items="categoryOptions"
-        placeholder="Select category"
-        class="w-full"
-      />
-    </UFormField>
+      <UFormField
+        label="Category"
+        name="category_id"
+        required
+      >
+        <USelect
+          v-model="state.category_id"
+          :items="categoryOptions"
+          placeholder="Select category"
+          class="w-full"
+        />
+      </UFormField>
+    </div>
 
     <template v-if="isWaterCategory">
       <UFormField
@@ -426,27 +429,31 @@ function onSubmit(event: FormSubmitEvent<Schema>) {
       </UFormField>
     </div>
 
-    <UFormField
-      label="Expiration date"
-      name="expiration_date"
-      description="Optional — for food, meds, batteries"
-    >
-      <UInput
-        v-model="state.expiration_date"
-        type="date"
-      />
-    </UFormField>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <UFormField
+        label="Expiration date"
+        name="expiration_date"
+        description="Optional — for food, meds, batteries"
+      >
+        <UInput
+          v-model="state.expiration_date"
+          type="date"
+          class="w-full"
+        />
+      </UFormField>
 
-    <UFormField
-      label="Location"
-      name="location"
-      description="Where you keep it — pantry, garage, go-bag"
-    >
-      <UInput
-        v-model="state.location"
-        placeholder="e.g. Kitchen pantry"
-      />
-    </UFormField>
+      <UFormField
+        label="Location"
+        name="location"
+        description="Where you keep it — pantry, garage, go-bag"
+      >
+        <UInput
+          v-model="state.location"
+          placeholder="e.g. Kitchen pantry"
+          class="w-full"
+        />
+      </UFormField>
+    </div>
 
     <UFormField
       label="Notes"

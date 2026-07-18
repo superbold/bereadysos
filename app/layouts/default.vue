@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const user = useSupabaseUser()
+const route = useRoute()
 
 const navItems = [
   { label: 'Dashboard', to: '/', icon: 'i-lucide-layout-dashboard' },
@@ -8,6 +9,10 @@ const navItems = [
   { label: 'Restock', to: '/restock', icon: 'i-lucide-shopping-cart' },
   { label: 'Expiring', to: '/expiring', icon: 'i-lucide-calendar-clock' }
 ]
+
+function isActiveNavItem(to: string) {
+  return route.path === to
+}
 
 async function signOut() {
   const supabase = useSupabaseClient()
@@ -41,6 +46,8 @@ async function signOut() {
                 variant="ghost"
                 size="sm"
                 :aria-label="item.tooltip"
+                :aria-current="isActiveNavItem(item.to) ? 'page' : undefined"
+                :class="isActiveNavItem(item.to) ? 'rounded-none border-b-2 border-primary' : undefined"
               >
                 {{ item.label }}
               </UButton>
@@ -52,6 +59,8 @@ async function signOut() {
               color="neutral"
               variant="ghost"
               size="sm"
+              :aria-current="isActiveNavItem(item.to) ? 'page' : undefined"
+              :class="isActiveNavItem(item.to) ? 'rounded-none border-b-2 border-primary' : undefined"
             >
               {{ item.label }}
             </UButton>
