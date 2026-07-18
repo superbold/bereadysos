@@ -2,13 +2,13 @@ import type { CategoryGap } from './coverage'
 
 export type OwnerNextActionSeverity = 'error' | 'warning' | 'success' | 'neutral'
 
-export type OwnerRestockPhase =
-  | 'draft'
-  | 'shopping'
-  | 'shopping_complete'
-  | 'intake_pending'
-  | 'intake_submitted'
-  | null
+export type OwnerRestockPhase
+  = | 'draft'
+    | 'shopping'
+    | 'shopping_complete'
+    | 'intake_pending'
+    | 'intake_submitted'
+    | null
 
 export type OwnerNextAction = {
   id: string
