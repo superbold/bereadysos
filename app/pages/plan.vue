@@ -208,7 +208,7 @@ async function applyTargetDays(days: number) {
         v-if="items.length && openGaps.length"
         class="mb-8"
       >
-        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 class="text-sm font-semibold text-highlighted">
               Plan gap shortfalls
@@ -217,14 +217,22 @@ async function applyTargetDays(days: number) {
               {{ openGaps.length }} categor{{ openGaps.length === 1 ? 'y' : 'ies' }} with a shortfall below your {{ household.target_days }}-day target.
             </p>
           </div>
-          <UButton
-            to="/inventory"
-            label="Update inventory"
-            icon="i-lucide-package"
-            color="neutral"
-            variant="outline"
-            size="sm"
-          />
+          <div class="flex flex-wrap gap-2">
+            <UButton
+              to="/restock"
+              label="Restock from gaps"
+              icon="i-lucide-shopping-cart"
+              size="sm"
+            />
+            <UButton
+              to="/inventory"
+              label="Update inventory"
+              icon="i-lucide-package"
+              color="neutral"
+              variant="outline"
+              size="sm"
+            />
+          </div>
         </div>
 
         <div class="grid gap-4">

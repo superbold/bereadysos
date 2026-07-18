@@ -1,15 +1,27 @@
 <script setup lang="ts">
 import {
   computeAllCategoryCoverage,
+  computeAllCategoryGaps,
   countExpired,
   countExpiringSoon,
   listExpiringItems,
   TARGET_DAY_PRESETS
 } from '#shared/coverage'
+import {
+  computeOwnerNextAction,
+  ownerNextActionAlertColor,
+  resolveOwnerRestockPhase
+} from '#shared/owner-next-action'
 
 const user = useSupabaseUser()
 const toast = useToast()
-const { household, pending: householdPending, ensureHousehold, updateHousehold } = useHousehold()
+const {
+  household,
+  pending: householdPending,
+  ensureHousehold,
+  updateHousehold,
+  isHouseholdOwner
+} = useHousehold()
 const {
   categories,
   items,
@@ -18,7 +30,13 @@ const {
   fetchCategories,
   fetchItems
 } = useInventory()
-const { coordinationBanner } = useShopRuns()
+const {
+  runs,
+  coordinationBanner,
+  shoppingCompleteRun,
+  intakeRun,
+  submittedIntakeRun
+} = useShopRuns()
 
 const authReady = ref(import.meta.server)
 const savingTargetDays = ref(false)
@@ -67,9 +85,53 @@ const categoryCoverage = computed(() => {
   )
 })
 
+const openGaps = computed(() => {
+  if (!household.value || !categories.value.length) {
+    return []
+  }
+  return computeAllCategoryGaps(
+    categories.value,
+    coverageItems.value,
+    household.value.headcount,
+    household.value.target_days
+  ).filter(gap => !gap.isMet)
+})
+
 const expiringSoonCount = computed(() => countExpiringSoon(coverageItems.value))
 const expiredCount = computed(() => countExpired(coverageItems.value))
 const upcomingExpiring = computed(() => listExpiringItems(coverageItems.value))
+
+const draftRun = computed(() => runs.value.find(run => run.status === 'draft') ?? null)
+const shoppingRun = computed(() => runs.value.find(run => run.status === 'shopping') ?? null)
+
+const ownerNextAction = computed(() => {
+  if (!household.value || !isHouseholdOwner.value) {
+    return null
+  }
+
+  const restockPhase = resolveOwnerRestockPhase({
+    hasDraft: !!draftRun.value,
+    hasShopping: !!shoppingRun.value,
+    hasShoppingComplete: !!shoppingCompleteRun.value,
+    hasIntakePending: !!intakeRun.value,
+    hasIntakeSubmitted: !!submittedIntakeRun.value
+  })
+
+  return computeOwnerNextAction({
+    openGaps: openGaps.value,
+    itemCount: items.value.length,
+    targetDays: household.value.target_days,
+    expiredCount: expiredCount.value,
+    expiringSoonCount: expiringSoonCount.value,
+    restockPhase,
+    isPlanOwner: true
+  })
+})
+
+/** Helpers still get the coordination banner; owners use the next-action card. */
+const showCoordinationBanner = computed(() =>
+  !!coordinationBanner.value && !isHouseholdOwner.value
+)
 
 async function loadDashboardData() {
   await fetchCategories()
@@ -165,8 +227,34 @@ function formatExpiringLabel(daysUntil: number) {
         class="mb-6"
       />
 
+      <section
+        v-if="ownerNextAction"
+        class="mb-8"
+      >
+        <p class="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">
+          This week
+        </p>
+        <UAlert
+          :color="ownerNextActionAlertColor(ownerNextAction.severity)"
+          :icon="ownerNextAction.icon"
+          :title="ownerNextAction.title"
+          :description="ownerNextAction.detail"
+          variant="subtle"
+        >
+          <template #actions>
+            <UButton
+              :to="ownerNextAction.href"
+              :label="ownerNextAction.ctaLabel"
+              size="sm"
+              :color="ownerNextAction.severity === 'success' ? 'neutral' : 'primary'"
+              :variant="ownerNextAction.severity === 'success' ? 'outline' : 'solid'"
+            />
+          </template>
+        </UAlert>
+      </section>
+
       <UAlert
-        v-if="coordinationBanner"
+        v-if="showCoordinationBanner && coordinationBanner"
         :color="coordinationBanner.color"
         icon="i-lucide-shopping-cart"
         :title="coordinationBanner.title"

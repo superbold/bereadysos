@@ -92,7 +92,7 @@ describe('computePlanGapAlerts', () => {
     assert.equal(alerts.length, 1)
     assert.equal(alerts[0]?.severity, 'warning')
     assert.match(alerts[0]?.detail ?? '', /Shortfall: need \+2 gallons/)
-    assert.equal(alerts[0]?.href, '/plan')
+    assert.equal(alerts[0]?.href, '/restock')
   })
 
   it('uses error severity when consumable on hand is zero', () => {

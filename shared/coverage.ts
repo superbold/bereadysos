@@ -487,7 +487,7 @@ export function computePlanGapAlerts(gaps: CategoryGap[], targetDays: number): A
       icon: gap.icon ?? 'i-lucide-trending-up',
       title: gap.name,
       detail: `${formatGapLabel(gap)} · ${formatGapDetail(gap, targetDays)}`,
-      href: '/plan',
+      href: '/restock',
       categoryId: gap.categoryId
     }))
     .sort((a, b) => ALERT_SEVERITY_ORDER[a.severity] - ALERT_SEVERITY_ORDER[b.severity]

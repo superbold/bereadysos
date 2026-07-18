@@ -137,13 +137,17 @@ Ship guidance **per phase** — fewer decisions, clearer next action, mobile-fir
 3. **Mobile shopping list** — Phone-as-list: readable in-store UI for the active list (check off / qty tweaks).
 4. **Fast put-away / log** — After shopping, shortest path to update inventory from the list; research spike: camera or barcode to create/update items (prototype one assist, not a full scanner product).
 5. **De-emphasize roles UI** — Settings/sharing and Restock copy: don’t lead with four roles; “Add help later” / advanced for helpers.
-6. **Owner “See” pass** — Dashboard (+ alerts): one weekly maintenance narrative + **one primary CTA** into Restock / Expiring as needed (implements phase 1 of the map).
+6. [x] **Owner “See” pass** — Dashboard **This week** card via `computeOwnerNextAction` (restock → gaps → expired → expiring → empty → on target); plan-gap alerts link to Restock; Plan page **Restock from gaps** CTA.
+
+#### After Solo owner v1 tickets 3–6 (not before)
+
+7. **Category accordion inventory** — Expand each of the 7 coverage categories (Water → Documents) in place: status in a sticky header, list items under it, add/remove without the slideover as the default path. Collapse to scan the next category. Addresses bouncing Plan ↔ Inventory to see “what’s still left.” **Do not start until tickets 3–6 are done.**
 
 ---
 
 ## Next
 
-_Solo owner v1 — pick **ticket 2** (solo Restock path) or **ticket 6** (Dashboard See narrative); both are unblocked by ticket 1._
+_Solo owner v1 — remaining: **3** (mobile shopping list), **4** (fast put-away), **5** (de-emphasize roles). Ticket **7** (category accordion) waits until those ship._
 
 ---
 
@@ -161,6 +165,7 @@ Multi-role coordination is **shipped but not the product priority**. Resume when
 
 ### Other Later
 
+- [ ] **Category accordion inventory** — see Solo ticket **7** above; promote only after tickets 3–6 ship
 - [ ] **Phase guide toons (after Solo owner v1 loop UX)** — optional cell-shaded character behind each maintenance phase (See / Plan trip / Shop / Log·put away / Stay current); quiet atmosphere, not competing CTAs. Style via gear / avatar settings (none vs illustrated; later variants). **Do not** infer gender from name.
 - [ ] **Internal admin / support tools** — view users & households, revoke memberships, resend/cancel invites, delete test accounts; admin-only auth
 - [ ] **Landing page plan-picker showcase** — marketing (mock or sanitized demo)

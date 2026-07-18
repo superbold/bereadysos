@@ -51,7 +51,7 @@ function onAlertClick() {
     <USlideover
       v-model:open="open"
       title="Needs attention"
-      description="Review expiration dates, plan gaps, and coverage — then jump to the right page."
+      description="Review what needs attention — then jump to Restock, Expiring, or coverage."
     >
       <template #body>
         <div

@@ -56,6 +56,8 @@ Short record of choices worth remembering across sessions. Add a dated entry whe
 
 **Build order implied:** Ticket 6 (See on Dashboard) + ticket 2 (solo Restock) can proceed from this map; Prefer Dashboard CTA shaping in ticket 6, solo path simplification in ticket 2 (they can interleave).
 
+**Category accordion inventory (after Solo tickets 3–6):** Rebuild Inventory around expandable coverage categories (sticky status header, inline add/remove, no slideover-by-default). Validated by solo restock testing — owners otherwise bounce Plan ↔ Inventory to see what’s left. **Do not start before** mobile list, put-away, roles de-emphasis, and Dashboard See are done.
+
 ### Phase guide toons (polish, after solo loop)
 
 **Decision (2026-07-14):** Optional cell-shaded characters behind maintenance phases are a **Later** flourish — after Solo owner v1 loop UX exists. Preference lives in **gear / avatar settings** (e.g. none vs illustrated). **Do not** infer gender or style from the owner’s name.
@@ -323,3 +325,5 @@ Email subdomain is **DNS only** in Vercel — not a Vercel deployment.
 | 2026-07 | Solo loop UX — Dashboard = See / next action; Restock = plan trip → shop → log execution; no new Maintain page for v1 |
 | 2026-07 | Phase guide toons — optional, gear/avatar setting; never infer style from name; after solo loop UX |
 | 2026-07 | Water bottles — count × fl oz → gallons via existing `volume_per_unit`; FEMA juxtapose in inventory form |
+| 2026-07 | Category accordion inventory — after Solo tickets 3–6; sticky category status + inline items (no Plan bounce) |
+| 2026-07 | Owner See pass — Dashboard “This week” next action; plan gaps CTA to Restock |
