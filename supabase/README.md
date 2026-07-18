@@ -50,6 +50,8 @@ Run `migrations/20260707120000_shop_run_intake.sql` — Phase B intake RPCs (`st
 
 Run `migrations/20260717120000_solo_restock_complete.sql` — Solo owner Ticket 2: `complete_solo_restock_run` applies logged intake lines to inventory and closes the run.
 
+Run `migrations/20260718140000_shop_run_line_shopping.sql` — Solo owner Ticket 3: `update_shop_run_line_shopping` for in-store check-off / qty tweaks while status is `shopping`.
+
 ### Migration file names
 
 Files use `YYYYMMDDHHMMSS_description.sql` — the prefix is the **date the migration was authored**, not when you run it in Supabase. New migrations should use today’s timestamp; do not rename files after they have been applied.

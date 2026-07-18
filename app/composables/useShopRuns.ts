@@ -156,6 +156,43 @@ export function useShopRuns() {
     return { data, error: null }
   }
 
+  function patchLineInRuns(line: ShopRunLine) {
+    runs.value = runs.value.map((run) => {
+      if (run.id !== line.shop_run_id) {
+        return run
+      }
+      return {
+        ...run,
+        lines: run.lines.map(existing => (existing.id === line.id ? line : existing))
+      }
+    })
+  }
+
+  async function updateLineShopping(
+    lineId: string,
+    payload: {
+      line_status: 'pending' | 'bought' | 'skipped'
+      quantity_reported?: number | null
+    }
+  ) {
+    const { data, error } = await supabase.rpc('update_shop_run_line_shopping', {
+      p_line_id: lineId,
+      p_line_status: payload.line_status,
+      p_quantity_reported: payload.quantity_reported ?? undefined
+    })
+
+    if (error) {
+      return { data: null, error }
+    }
+
+    if (data) {
+      patchLineInRuns(data)
+    } else {
+      await loadRuns()
+    }
+    return { data, error: null }
+  }
+
   async function updateLineIntake(
     lineId: string,
     payload: {
@@ -175,7 +212,11 @@ export function useShopRuns() {
       return { data: null, error }
     }
 
-    await loadRuns()
+    if (data) {
+      patchLineInRuns(data)
+    } else {
+      await loadRuns()
+    }
     return { data, error: null }
   }
 
@@ -306,6 +347,7 @@ export function useShopRuns() {
     startRun,
     completeShopping,
     startIntake,
+    updateLineShopping,
     updateLineIntake,
     submitIntake,
     completeSoloRestock

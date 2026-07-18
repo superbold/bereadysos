@@ -60,3 +60,28 @@ export function formatReportedQuantity(
   }
   return unit ? `${quantity} ${unit}` : String(quantity)
 }
+
+export type ShoppingLineSnapshot = {
+  line_status: ShopRunLineStatus
+}
+
+/** Progress while checking off the in-store list. */
+export function shoppingListProgress(lines: ShoppingLineSnapshot[]) {
+  const total = lines.length
+  const checked = lines.filter(line => line.line_status !== 'pending').length
+  return {
+    total,
+    checked,
+    remaining: Math.max(total - checked, 0),
+    allChecked: total > 0 && checked === total
+  }
+}
+
+export function nextShoppingQuantity(
+  current: number | null,
+  planned: number | null,
+  delta: number
+) {
+  const base = current ?? planned ?? 0
+  return Math.max(0, Math.round((base + delta) * 1000) / 1000)
+}

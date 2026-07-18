@@ -29,6 +29,7 @@ const {
   startRun,
   completeShopping,
   startIntake,
+  updateLineShopping,
   updateLineIntake,
   submitIntake,
   completeSoloRestock,
@@ -40,6 +41,7 @@ const {
 
 const completeNote = ref('')
 const savingLineId = ref<string | null>(null)
+const canEditShoppingList = computed(() => isHouseholdOwner.value || isShopper.value)
 
 /** Owners use the solo restock path (list → shop → log → update inventory). */
 const soloOwnerMode = computed(() => isHouseholdOwner.value)
@@ -189,6 +191,28 @@ async function onStartShopping(runId: string) {
   })
 }
 
+async function onUpdateShoppingLine(payload: {
+  lineId: string
+  line_status: 'pending' | 'bought' | 'skipped'
+  quantity_reported: number | null
+}) {
+  savingLineId.value = payload.lineId
+  const { error } = await updateLineShopping(payload.lineId, {
+    line_status: payload.line_status,
+    quantity_reported: payload.quantity_reported
+  })
+  savingLineId.value = null
+
+  if (error) {
+    toast.add({
+      title: 'Could not update list item',
+      description: error.message,
+      color: 'error',
+      icon: 'i-lucide-circle-alert'
+    })
+  }
+}
+
 async function onCompleteShopping(runId: string) {
   const { error } = await completeShopping(runId, completeNote.value)
   completeNote.value = ''
@@ -217,7 +241,7 @@ async function onCompleteShopping(runId: string) {
 
     toast.add({
       title: 'Shopping done',
-      description: 'Log what you bought below, then update your inventory.',
+      description: 'Checked items are ready — finish any leftovers, then update inventory.',
       color: 'success',
       icon: 'i-lucide-check-circle'
     })
@@ -371,7 +395,7 @@ async function onCompleteSoloRestock(runId: string) {
 
     <template v-else-if="household">
       <section
-        v-if="isHouseholdOwner"
+        v-if="isHouseholdOwner && !shoppingRun"
         class="mb-6 space-y-4 rounded-lg border border-default p-4"
       >
         <div>
@@ -474,51 +498,30 @@ async function onCompleteSoloRestock(runId: string) {
 
       <section
         v-if="shoppingRun"
-        class="mb-6 space-y-4 rounded-lg border border-primary/30 bg-primary/5 p-4"
+        class="mb-6 space-y-4 rounded-xl border border-primary/30 bg-primary/5 p-4 sm:p-5"
       >
         <div>
-          <h2 class="text-sm font-semibold text-highlighted">
+          <h2 class="text-lg font-semibold tracking-tight text-highlighted sm:text-xl">
             {{ shoppingRun.title }}
           </h2>
           <p class="mt-1 text-sm text-muted">
             {{ runStatusLabel(shoppingRun) }}
+            <template v-if="soloOwnerMode">
+              — tap items as you find them
+            </template>
           </p>
         </div>
 
-        <ul class="divide-y divide-default rounded-lg border border-default bg-default">
-          <li
-            v-for="line in shoppingRun.lines"
-            :key="line.id"
-            class="flex items-center justify-between gap-3 p-3 text-sm"
-          >
-            <span class="font-medium text-highlighted">{{ line.name }}</span>
-            <span class="text-muted">
-              <template v-if="line.quantity_planned != null">
-                {{ line.quantity_planned }}{{ line.unit ? ` ${line.unit}` : '' }}
-              </template>
-            </span>
-          </li>
-        </ul>
-
-        <div
-          v-if="isHouseholdOwner || isShopper"
-          class="space-y-3"
-        >
-          <UTextarea
-            v-model="completeNote"
-            :placeholder="soloOwnerMode
-              ? 'Optional note (substitutions, out of stock…)'
-              : 'Optional note for the inventory keeper (substitutions, out of stock…)'"
-            :rows="2"
-            autoresize
-          />
-          <UButton
-            :label="soloOwnerMode ? 'Done shopping' : 'Mark shopping complete'"
-            icon="i-lucide-check-circle"
-            :loading="working"
-            @click="onCompleteShopping(shoppingRun.id)"
-          />
-        </div>
+        <RestockShoppingList
+          v-model:note="completeNote"
+          :lines="shoppingRun.lines"
+          :can-edit="canEditShoppingList"
+          :working="working"
+          :saving-line-id="savingLineId"
+          :complete-label="soloOwnerMode ? 'Done shopping' : 'Mark shopping complete'"
+          @update-line="onUpdateShoppingLine"
+          @complete="onCompleteShopping(shoppingRun.id)"
+        />
       </section>
 
       <section
@@ -698,7 +701,7 @@ async function onCompleteSoloRestock(runId: string) {
         />
       </section>
 
-      <section v-if="runs.length">
+      <section v-if="runs.length && !shoppingRun">
         <h2 class="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">
           All runs
         </h2>

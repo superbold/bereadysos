@@ -48,7 +48,7 @@ Short record of choices worth remembering across sessions. Add a dated entry whe
 |-------|-------------------|----------------|
 | **1. See** | Dashboard coverage; Plan gaps; Expiring; AlertsBell → those pages | Dashboard owns one calm “this week / do this next” card; AlertsBell stays inbox, ranked toward that next action |
 | **2. Plan the trip** | Restock: owner can create run from gaps; Plan has **no** CTA to Restock; helper copy (“Send to shopper”) | Solo list-from-gaps on Restock; Plan (and See CTA) deep-link into that path |
-| **3. Shop** | Restock `shopping` status: read-only list + mark complete | Phone-as-list on Restock (check-off / qty); solo labels (not shopper handoff) |
+| **3. Shop** | Restock `shopping` status: read-only list + mark complete | **Shipped (ticket 3):** phone-as-list on Restock — check-off, qty steppers, progress, sticky Done; line progress persists into intake |
 | **4. Log / put away** | Restock intake (doesn’t write inventory) + manual `/inventory` CRUD | Solo put-away that **updates inventory** from the list (v1 may simplify statuses; multi-role Phase C stays Later) |
 | **5. Stay current** | Alerts + reappearing gaps/expiring; no weekly narrative | Dashboard + alerts nudge back into See → Restock |
 

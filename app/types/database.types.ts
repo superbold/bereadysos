@@ -428,6 +428,14 @@ export type Database = {
         }
         Returns: Database['public']['Tables']['shop_run_lines']['Row']
       }
+      update_shop_run_line_shopping: {
+        Args: {
+          p_line_id: string
+          p_line_status: Database['public']['Enums']['shop_run_line_status']
+          p_quantity_reported?: number
+        }
+        Returns: Database['public']['Tables']['shop_run_lines']['Row']
+      }
       submit_shop_run_intake: {
         Args: { p_run_id: string }
         Returns: Database['public']['Tables']['shop_runs']['Row']
