@@ -114,19 +114,33 @@ async function signOut() {
 
       <template #body>
         <nav v-if="user">
-          <UNavigationMenu
-            :items="mobileNavItems"
-            orientation="vertical"
-            class="-mx-2.5"
-          />
-          <USeparator class="my-3" />
+          <ul class="space-y-2">
+            <li
+              v-for="item in mobileNavItems"
+              :key="item.to"
+            >
+              <UButton
+                :to="item.to"
+                :label="item.label"
+                :icon="item.icon"
+                :color="item.active ? 'primary' : 'neutral'"
+                :variant="item.active ? 'soft' : 'ghost'"
+                size="xl"
+                block
+                class="min-h-14 justify-start px-4 text-base"
+                :aria-current="item.active ? 'page' : undefined"
+              />
+            </li>
+          </ul>
+          <USeparator class="my-4" />
           <UButton
             label="Sign out"
             icon="i-lucide-log-out"
             color="neutral"
             variant="ghost"
+            size="xl"
             block
-            class="justify-start"
+            class="min-h-14 justify-start px-4 text-base"
             @click="signOut"
           />
         </nav>
