@@ -42,7 +42,6 @@ const {
 const completeNote = ref('')
 const savingLineId = ref<string | null>(null)
 const noGapsGuidanceOpen = ref(false)
-const activeRunEl = ref<HTMLElement | null>(null)
 const canEditShoppingList = computed(() => isHouseholdOwner.value || isShopper.value)
 
 /** Owners use the solo restock path (list → shop → log → update inventory). */
@@ -242,7 +241,8 @@ async function onStartSupplementaryShopping() {
 
 async function scrollToActiveRun() {
   await nextTick()
-  activeRunEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const target = document.getElementById('active-shopping-list')
+  target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 async function onStartShopping(runId: string) {
@@ -599,7 +599,7 @@ async function onCompleteSoloRestock(runId: string) {
 
       <section
         v-if="draftRun"
-        ref="activeRunEl"
+        id="active-shopping-list"
         class="panel"
       >
         <div class="flex flex-wrap items-start justify-between gap-3">
@@ -651,7 +651,7 @@ async function onCompleteSoloRestock(runId: string) {
 
       <section
         v-if="shoppingRun"
-        ref="activeRunEl"
+        id="active-shopping-list"
         class="mb-6 space-y-4 rounded-xl border border-primary/30 bg-primary/5 p-4 sm:p-5"
       >
         <div>
@@ -680,7 +680,7 @@ async function onCompleteSoloRestock(runId: string) {
 
       <section
         v-if="shoppingCompleteRun"
-        ref="activeRunEl"
+        id="active-shopping-list"
         class="panel panel--caution"
       >
         <div>
@@ -733,7 +733,7 @@ async function onCompleteSoloRestock(runId: string) {
 
       <section
         v-if="intakeRun"
-        ref="activeRunEl"
+        id="active-shopping-list"
         class="panel panel--emphasize"
       >
         <div>
@@ -820,7 +820,7 @@ async function onCompleteSoloRestock(runId: string) {
 
       <section
         v-if="submittedIntakeRun"
-        ref="activeRunEl"
+        id="active-shopping-list"
         class="panel"
       >
         <div>
