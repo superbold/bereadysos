@@ -13,7 +13,7 @@ Covers **owner**, **inventory keeper**, **shopper**, and **watcher** on a shared
   2. `20260625160100_household_coordination.sql`
   3. `20260707120000_shop_run_intake.sql`
 - [ ] Latest `main` deployed on Vercel (`bereadysos.com`)
-- [ ] Owner household has **open plan gaps** (Plan page) so **Restock from plan gaps** produces items — or use **Empty restock run** for a minimal path
+- [ ] Owner household has **open plan gaps** (Plan page) so **Restock from plan gaps** produces items — or use **Supplementary Shopping** for a minimal path
 - [ ] Four test accounts (separate emails) or three helpers + one owner
 
 **Verify migrations (SQL Editor):**

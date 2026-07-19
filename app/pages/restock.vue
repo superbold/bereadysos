@@ -42,6 +42,7 @@ const {
 const completeNote = ref('')
 const savingLineId = ref<string | null>(null)
 const noGapsGuidanceOpen = ref(false)
+const activeRunEl = ref<HTMLElement | null>(null)
 const canEditShoppingList = computed(() => isHouseholdOwner.value || isShopper.value)
 
 /** Owners use the solo restock path (list → shop → log → update inventory). */
@@ -82,6 +83,26 @@ const hasActiveCoordinationRun = computed(() =>
 const canStartFromGaps = computed(() =>
   openGaps.value.length > 0 && !hasActiveCoordinationRun.value
 )
+
+const activeRun = computed(() =>
+  shoppingRun.value
+  ?? draftRun.value
+  ?? shoppingCompleteRun.value
+  ?? intakeRun.value
+  ?? submittedIntakeRun.value
+  ?? null
+)
+
+const continueActiveRunLabel = computed(() => {
+  const title = activeRun.value?.title ?? ''
+  if (title === 'Supplementary Shopping' || title === 'Restock run') {
+    return 'Go to Supplementary Shopping'
+  }
+  if (title === 'Plan Gap' || title === 'Restock from plan gaps') {
+    return 'Go to Plan Gap list'
+  }
+  return 'Go to current run'
+})
 
 const coordinationStatusLabels: Record<string, string> = {
   draft: 'Draft',
@@ -156,7 +177,7 @@ function onRestockFromGapsClick() {
 }
 
 async function onCreateFromGaps() {
-  const { data: run, error: createError } = await createRun('Restock from plan gaps')
+  const { data: run, error: createError } = await createRun('Plan Gap')
   if (createError || !run) {
     toast.add({
       title: 'Could not start restock run',
@@ -188,7 +209,7 @@ async function onCreateFromGaps() {
   }
 
   toast.add({
-    title: 'Restock list created',
+    title: 'Plan Gap list created',
     description: `${openGaps.value.length} items from your plan gaps.`,
     color: 'success',
     icon: 'i-lucide-shopping-cart'
@@ -197,7 +218,7 @@ async function onCreateFromGaps() {
 
 async function onStartEmptyFromGuidance() {
   noGapsGuidanceOpen.value = false
-  const { error } = await createRun()
+  const { error } = await createRun('Supplementary Shopping')
   if (error) {
     toast.add({
       title: 'Could not start restock run',
@@ -206,6 +227,23 @@ async function onStartEmptyFromGuidance() {
       icon: 'i-lucide-circle-alert'
     })
   }
+}
+
+async function onStartSupplementaryShopping() {
+  const { error } = await createRun('Supplementary Shopping')
+  if (error) {
+    toast.add({
+      title: 'Could not start Supplementary Shopping',
+      description: error.message,
+      color: 'error',
+      icon: 'i-lucide-circle-alert'
+    })
+  }
+}
+
+async function scrollToActiveRun() {
+  await nextTick()
+  activeRunEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 async function onStartShopping(runId: string) {
@@ -398,7 +436,7 @@ async function onCompleteSoloRestock(runId: string) {
       </h1>
       <p class="mt-1 text-sm text-muted">
         <template v-if="soloOwnerMode">
-          Turn plan gaps into a shopping list, log what you bought, and update your inventory.
+          Create either a Plan Gap or Supplementary Shopping list, then log what you bought. This list will be used to update your inventory.
         </template>
         <template v-else>
           Coordinate shopping and intake — plan owner, shopper, and inventory keeper working together.
@@ -439,62 +477,88 @@ async function onCompleteSoloRestock(runId: string) {
       >
         <div>
           <h2 class="text-sm font-semibold text-highlighted">
-            Start a run
+            Choose a list type
           </h2>
           <p class="mt-1 text-sm text-muted">
             <template v-if="soloOwnerMode">
-              Build a shopping list from what your plan still needs.
+              Both paths end the same way: shop the list, log what came home, then update inventory.
             </template>
             <template v-else>
-              Build a shopping list from plan gaps, then hand off to your shopper.
+              Build a shopping list from plan gaps or start Supplementary Shopping, then hand off to your shopper.
             </template>
           </p>
         </div>
 
-        <div class="flex flex-wrap gap-2">
-          <UButton
-            label="Restock from plan gaps"
-            icon="i-lucide-list-plus"
-            :color="canStartFromGaps ? 'primary' : 'neutral'"
-            :variant="canStartFromGaps ? 'solid' : 'soft'"
-            :class="canStartFromGaps ? undefined : 'restock-cta-unavailable'"
-            :loading="working"
-            :aria-disabled="!canStartFromGaps"
-            @click="onRestockFromGapsClick"
-          />
-          <UButton
-            label="Empty restock run"
-            icon="i-lucide-plus"
-            color="neutral"
-            variant="outline"
-            :disabled="hasActiveCoordinationRun"
-            :loading="working"
-            @click="createRun()"
-          />
-        </div>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div class="restock-list-choice">
+            <div class="flex items-start gap-2">
+              <UIcon
+                name="i-lucide-clipboard-list"
+                class="mt-0.5 size-5 shrink-0 text-primary"
+              />
+              <div class="min-w-0">
+                <h3 class="font-semibold text-highlighted">
+                  Plan Gap
+                </h3>
+                <p class="mt-1 text-sm text-muted">
+                  Builds a shopping list from what your Plan still needs — coverage shortfalls like water, food, or kit items.
+                </p>
+              </div>
+            </div>
+            <UButton
+              label="Start Plan Gap list"
+              icon="i-lucide-list-plus"
+              :color="canStartFromGaps ? 'primary' : 'neutral'"
+              :variant="canStartFromGaps ? 'solid' : 'soft'"
+              :class="canStartFromGaps ? undefined : 'restock-cta-unavailable'"
+              :loading="working"
+              :aria-disabled="!canStartFromGaps"
+              block
+              class="mt-4"
+              @click="onRestockFromGapsClick"
+            />
+          </div>
 
-        <ul class="space-y-1.5 text-sm text-muted">
-          <li>
-            <span class="font-medium text-highlighted">Restock from plan gaps</span>
-            — builds a shopping list from what your Plan still needs (coverage shortfalls).
-          </li>
-          <li>
-            <span class="font-medium text-highlighted">Empty restock run</span>
-            — starts a blank list for one-off shopping outside those gaps.
-          </li>
-        </ul>
+          <div class="restock-list-choice">
+            <div class="flex items-start gap-2">
+              <UIcon
+                name="i-lucide-shopping-bag"
+                class="mt-0.5 size-5 shrink-0 text-muted"
+              />
+              <div class="min-w-0">
+                <h3 class="font-semibold text-highlighted">
+                  Supplementary Shopping
+                </h3>
+                <p class="mt-1 text-sm text-muted">
+                  For when you want to shop outside the gap for one-off supplies, extras, or things Plan doesn’t track yet.
+                </p>
+              </div>
+            </div>
+            <UButton
+              label="Start Supplementary Shopping"
+              icon="i-lucide-plus"
+              color="neutral"
+              variant="outline"
+              :disabled="hasActiveCoordinationRun"
+              :loading="working"
+              block
+              class="mt-4"
+              @click="onStartSupplementaryShopping"
+            />
+          </div>
+        </div>
 
         <UAlert
           v-if="noGapsGuidanceOpen"
           color="warning"
           icon="i-lucide-circle-help"
           title="There are no plan gaps right now"
-          description="Your inventory meets your target (or Plan has nothing short). Would you like to start an empty restock run instead for one-off shopping?"
+          description="Your inventory meets your target (or Plan has nothing short). Would you like to start Supplementary Shopping instead for one-off supplies outside the gaps?"
           variant="subtle"
         >
           <template #actions>
             <UButton
-              label="Start empty restock run"
+              label="Start Supplementary Shopping"
               icon="i-lucide-plus"
               size="sm"
               color="primary"
@@ -511,16 +575,28 @@ async function onCompleteSoloRestock(runId: string) {
           </template>
         </UAlert>
 
-        <p
+        <div
           v-else-if="hasActiveCoordinationRun"
-          class="text-sm text-muted"
+          class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
         >
-          Finish the current run before starting another.
-        </p>
+          <p class="text-sm text-muted">
+            Finish the current run before starting another.
+          </p>
+          <UButton
+            :label="continueActiveRunLabel"
+            icon="i-lucide-arrow-down"
+            size="sm"
+            color="neutral"
+            variant="outline"
+            class="shrink-0"
+            @click="scrollToActiveRun"
+          />
+        </div>
       </section>
 
       <section
         v-if="draftRun"
+        ref="activeRunEl"
         class="panel"
       >
         <div class="flex flex-wrap items-start justify-between gap-3">
@@ -566,12 +642,13 @@ async function onCompleteSoloRestock(runId: string) {
           v-else
           class="text-sm text-muted"
         >
-          Add items from plan gaps or assign lines manually in a future update.
+          Add items for Supplementary Shopping, or restock from plan gaps in a future update.
         </p>
       </section>
 
       <section
         v-if="shoppingRun"
+        ref="activeRunEl"
         class="mb-6 space-y-4 rounded-xl border border-primary/30 bg-primary/5 p-4 sm:p-5"
       >
         <div>
@@ -600,6 +677,7 @@ async function onCompleteSoloRestock(runId: string) {
 
       <section
         v-if="shoppingCompleteRun"
+        ref="activeRunEl"
         class="panel panel--caution"
       >
         <div>
@@ -652,6 +730,7 @@ async function onCompleteSoloRestock(runId: string) {
 
       <section
         v-if="intakeRun"
+        ref="activeRunEl"
         class="panel panel--emphasize"
       >
         <div>
@@ -738,6 +817,7 @@ async function onCompleteSoloRestock(runId: string) {
 
       <section
         v-if="submittedIntakeRun"
+        ref="activeRunEl"
         class="panel"
       >
         <div>
