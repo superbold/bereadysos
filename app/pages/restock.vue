@@ -41,6 +41,7 @@ const {
 
 const completeNote = ref('')
 const savingLineId = ref<string | null>(null)
+const noGapsGuidanceOpen = ref(false)
 const canEditShoppingList = computed(() => isHouseholdOwner.value || isShopper.value)
 
 /** Owners use the solo restock path (list → shop → log → update inventory). */
@@ -76,6 +77,10 @@ const draftRun = computed(() => runs.value.find(run => run.status === 'draft'))
 const shoppingRun = computed(() => runs.value.find(run => run.status === 'shopping'))
 const hasActiveCoordinationRun = computed(() =>
   !!(draftRun.value || shoppingRun.value || shoppingCompleteRun.value || intakeRun.value || submittedIntakeRun.value)
+)
+
+const canStartFromGaps = computed(() =>
+  openGaps.value.length > 0 && !hasActiveCoordinationRun.value
 )
 
 const coordinationStatusLabels: Record<string, string> = {
@@ -129,6 +134,27 @@ watch(household, async (value) => {
   }
 })
 
+function onRestockFromGapsClick() {
+  if (hasActiveCoordinationRun.value) {
+    noGapsGuidanceOpen.value = false
+    toast.add({
+      title: 'Finish your current restock first',
+      description: 'You already have a run in progress. Complete or close it before starting another.',
+      color: 'warning',
+      icon: 'i-lucide-circle-alert'
+    })
+    return
+  }
+
+  if (!openGaps.value.length) {
+    noGapsGuidanceOpen.value = true
+    return
+  }
+
+  noGapsGuidanceOpen.value = false
+  void onCreateFromGaps()
+}
+
 async function onCreateFromGaps() {
   const { data: run, error: createError } = await createRun('Restock from plan gaps')
   if (createError || !run) {
@@ -167,6 +193,19 @@ async function onCreateFromGaps() {
     color: 'success',
     icon: 'i-lucide-shopping-cart'
   })
+}
+
+async function onStartEmptyFromGuidance() {
+  noGapsGuidanceOpen.value = false
+  const { error } = await createRun()
+  if (error) {
+    toast.add({
+      title: 'Could not start restock run',
+      description: error.message,
+      color: 'error',
+      icon: 'i-lucide-circle-alert'
+    })
+  }
 }
 
 async function onStartShopping(runId: string) {
@@ -416,9 +455,12 @@ async function onCompleteSoloRestock(runId: string) {
           <UButton
             label="Restock from plan gaps"
             icon="i-lucide-list-plus"
-            :disabled="!openGaps.length || hasActiveCoordinationRun"
+            :color="canStartFromGaps ? 'primary' : 'neutral'"
+            :variant="canStartFromGaps ? 'solid' : 'soft'"
+            :class="canStartFromGaps ? undefined : 'restock-cta-unavailable'"
             :loading="working"
-            @click="onCreateFromGaps"
+            :aria-disabled="!canStartFromGaps"
+            @click="onRestockFromGapsClick"
           />
           <UButton
             label="Empty restock run"
@@ -431,12 +473,44 @@ async function onCompleteSoloRestock(runId: string) {
           />
         </div>
 
-        <p
-          v-if="!openGaps.length"
-          class="text-sm text-muted"
+        <ul class="space-y-1.5 text-sm text-muted">
+          <li>
+            <span class="font-medium text-highlighted">Restock from plan gaps</span>
+            — builds a shopping list from what your Plan still needs (coverage shortfalls).
+          </li>
+          <li>
+            <span class="font-medium text-highlighted">Empty restock run</span>
+            — starts a blank list for one-off shopping outside those gaps.
+          </li>
+        </ul>
+
+        <UAlert
+          v-if="noGapsGuidanceOpen"
+          color="warning"
+          icon="i-lucide-circle-help"
+          title="There are no plan gaps right now"
+          description="Your inventory meets your target (or Plan has nothing short). Would you like to start an empty restock run instead for one-off shopping?"
+          variant="subtle"
         >
-          No open plan gaps — your inventory meets your target, or add items on the Plan page.
-        </p>
+          <template #actions>
+            <UButton
+              label="Start empty restock run"
+              icon="i-lucide-plus"
+              size="sm"
+              color="primary"
+              :loading="working"
+              @click="onStartEmptyFromGuidance"
+            />
+            <UButton
+              label="Not now"
+              size="sm"
+              color="neutral"
+              variant="ghost"
+              @click="noGapsGuidanceOpen = false"
+            />
+          </template>
+        </UAlert>
+
         <p
           v-else-if="hasActiveCoordinationRun"
           class="text-sm text-muted"

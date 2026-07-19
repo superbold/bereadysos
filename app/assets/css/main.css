@@ -897,3 +897,8 @@
 .panel--caution {
   @apply border-warning/40 bg-warning/5;
 }
+
+/* Clickable but clearly not the active CTA (e.g. Restock from gaps with no gaps). */
+.restock-cta-unavailable {
+  @apply cursor-not-allowed opacity-45 grayscale;
+}
