@@ -84,6 +84,8 @@ const canStartFromGaps = computed(() =>
   openGaps.value.length > 0 && !hasActiveCoordinationRun.value
 )
 
+const canStartSupplementary = computed(() => !hasActiveCoordinationRun.value)
+
 const activeRun = computed(() =>
   shoppingRun.value
   ?? draftRun.value
@@ -494,7 +496,8 @@ async function onCompleteSoloRestock(runId: string) {
             <div class="flex items-start gap-2">
               <UIcon
                 name="i-lucide-clipboard-list"
-                class="mt-0.5 size-5 shrink-0 text-primary"
+                class="mt-0.5 size-5 shrink-0"
+                :class="canStartFromGaps ? 'text-primary' : 'text-muted'"
               />
               <div class="min-w-0">
                 <h3 class="font-semibold text-highlighted">
@@ -523,7 +526,8 @@ async function onCompleteSoloRestock(runId: string) {
             <div class="flex items-start gap-2">
               <UIcon
                 name="i-lucide-shopping-bag"
-                class="mt-0.5 size-5 shrink-0 text-muted"
+                class="mt-0.5 size-5 shrink-0"
+                :class="canStartSupplementary ? 'text-primary' : 'text-muted'"
               />
               <div class="min-w-0">
                 <h3 class="font-semibold text-highlighted">
@@ -537,10 +541,12 @@ async function onCompleteSoloRestock(runId: string) {
             <UButton
               label="Start Supplementary Shopping"
               icon="i-lucide-plus"
-              color="neutral"
-              variant="outline"
-              :disabled="hasActiveCoordinationRun"
+              :color="canStartSupplementary ? 'primary' : 'neutral'"
+              :variant="canStartSupplementary ? 'solid' : 'soft'"
+              :class="canStartSupplementary ? undefined : 'restock-cta-unavailable'"
+              :disabled="!canStartSupplementary"
               :loading="working"
+              :aria-disabled="!canStartSupplementary"
               block
               class="mt-4"
               @click="onStartSupplementaryShopping"
@@ -586,8 +592,7 @@ async function onCompleteSoloRestock(runId: string) {
             :label="continueActiveRunLabel"
             icon="i-lucide-arrow-down"
             size="sm"
-            color="neutral"
-            variant="outline"
+            color="primary"
             class="shrink-0"
             @click="scrollToActiveRun"
           />
