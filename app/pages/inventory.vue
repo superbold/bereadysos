@@ -215,7 +215,7 @@ function closeDeleteModal() {
 
 <template>
   <div class="mx-auto max-w-3xl">
-    <div class="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
+    <div class="page-header">
       <div>
         <h1 class="text-2xl font-bold tracking-tight text-highlighted">
           Inventory

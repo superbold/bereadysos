@@ -873,3 +873,27 @@
   display: inline-flex;
   align-items: center;
 }
+
+/*
+  App layout helpers — semantic wrappers for repeated Tailwind structure.
+  Prefer these for page/section chrome; keep one-off utilities inline.
+*/
+.page-header {
+  @apply mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between;
+}
+
+.section-header {
+  @apply mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between;
+}
+
+.panel {
+  @apply mb-6 space-y-4 rounded-lg border border-default p-4;
+}
+
+.panel--emphasize {
+  @apply border-primary/30 bg-primary/5;
+}
+
+.panel--caution {
+  @apply border-warning/40 bg-warning/5;
+}

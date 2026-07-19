@@ -412,7 +412,7 @@ async function applyTargetDays(days: number) {
       </section>
 
       <section class="mb-8">
-        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="section-header">
           <div>
             <h2 class="text-sm font-semibold text-highlighted">
               Category coverage

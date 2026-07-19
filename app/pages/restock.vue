@@ -396,7 +396,7 @@ async function onCompleteSoloRestock(runId: string) {
     <template v-else-if="household">
       <section
         v-if="isHouseholdOwner && !shoppingRun"
-        class="mb-6 space-y-4 rounded-lg border border-default p-4"
+        class="panel"
       >
         <div>
           <h2 class="text-sm font-semibold text-highlighted">
@@ -447,7 +447,7 @@ async function onCompleteSoloRestock(runId: string) {
 
       <section
         v-if="draftRun"
-        class="mb-6 space-y-4 rounded-lg border border-default p-4"
+        class="panel"
       >
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -526,7 +526,7 @@ async function onCompleteSoloRestock(runId: string) {
 
       <section
         v-if="shoppingCompleteRun"
-        class="mb-6 space-y-4 rounded-lg border border-warning/40 bg-warning/5 p-4"
+        class="panel panel--caution"
       >
         <div>
           <h2 class="text-sm font-semibold text-highlighted">
@@ -578,7 +578,7 @@ async function onCompleteSoloRestock(runId: string) {
 
       <section
         v-if="intakeRun"
-        class="mb-6 space-y-4 rounded-lg border border-primary/30 bg-primary/5 p-4"
+        class="panel panel--emphasize"
       >
         <div>
           <h2 class="text-sm font-semibold text-highlighted">
@@ -664,7 +664,7 @@ async function onCompleteSoloRestock(runId: string) {
 
       <section
         v-if="submittedIntakeRun"
-        class="mb-6 space-y-4 rounded-lg border border-default p-4"
+        class="panel"
       >
         <div>
           <h2 class="text-sm font-semibold text-highlighted">
