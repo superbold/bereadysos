@@ -100,10 +100,7 @@ const continueActiveRunLabel = computed(() => {
   if (title === 'Supplementary Shopping' || title === 'Restock run') {
     return 'Go to Supplementary Shopping'
   }
-  if (title === 'Plan Gap' || title === 'Restock from plan gaps') {
-    return 'Go to Plan Gap list'
-  }
-  return 'Go to current run'
+  return 'Go to Plan Gap'
 })
 
 const coordinationStatusLabels: Record<string, string> = {
@@ -586,13 +583,14 @@ async function onCompleteSoloRestock(runId: string) {
           class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
         >
           <p class="text-sm text-muted">
-            Finish the current run before starting another.
+            Please finish the active list first before starting another —
           </p>
           <UButton
             :label="continueActiveRunLabel"
             icon="i-lucide-arrow-down"
             size="sm"
             color="primary"
+            variant="solid"
             class="shrink-0"
             @click="scrollToActiveRun"
           />
