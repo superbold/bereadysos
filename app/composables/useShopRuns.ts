@@ -3,6 +3,7 @@ import type { ShopRunLineStatus } from '#shared/shop-run-intake'
 import { canSubmitIntakeRun } from '#shared/shop-run-intake'
 
 export type ShopRunWithLines = ShopRun & { lines: ShopRunLine[] }
+export type ShoppingListType = 'plan_gap' | 'supplementary' | 'both'
 
 export function useShopRuns() {
   const supabase = useSupabaseClient<Database>()
@@ -89,6 +90,26 @@ export function useShopRuns() {
     return { data, error: null }
   }
 
+  async function createShoppingList(listType: ShoppingListType) {
+    if (!household.value?.id) {
+      return { data: null, error: new Error('No active plan loaded') }
+    }
+
+    working.value = true
+    const { data, error } = await supabase.rpc('create_shopping_list', {
+      p_household_id: household.value.id,
+      p_list_type: listType
+    })
+    working.value = false
+
+    if (error) {
+      return { data: null, error }
+    }
+
+    await loadRuns()
+    return { data, error: null }
+  }
+
   async function addLine(
     runId: string,
     payload: { name: string, category_id?: string | null, quantity?: number | null, unit?: string | null }
@@ -107,6 +128,61 @@ export function useShopRuns() {
 
     await loadRuns()
     return { data, error: null }
+  }
+
+  async function addShoppingListItem(
+    runId: string,
+    payload: {
+      name: string
+      category_id: string
+      quantity: number
+      unit?: string | null
+      note?: string | null
+    }
+  ) {
+    const { data, error } = await supabase.rpc('add_shopping_list_item', {
+      p_run_id: runId,
+      p_name: payload.name,
+      p_category_id: payload.category_id,
+      p_quantity: payload.quantity,
+      p_unit: payload.unit ?? undefined,
+      p_note: payload.note ?? undefined
+    })
+
+    if (error) {
+      return { data: null, error }
+    }
+
+    await loadRuns()
+    return { data, error: null }
+  }
+
+  async function removeShoppingListItem(lineId: string) {
+    const { error } = await supabase.rpc('remove_shopping_list_item', {
+      p_line_id: lineId
+    })
+
+    if (error) {
+      return { error }
+    }
+
+    await loadRuns()
+    return { error: null }
+  }
+
+  async function cancelShoppingList(runId: string) {
+    working.value = true
+    const { error } = await supabase.rpc('cancel_shopping_list', {
+      p_run_id: runId
+    })
+    working.value = false
+
+    if (error) {
+      return { error }
+    }
+
+    await loadRuns()
+    return { error: null }
   }
 
   async function startRun(runId: string, shopperUserId?: string | null) {
@@ -262,6 +338,10 @@ export function useShopRuns() {
     runs.value.find(run => run.status === 'intake_pending' && !!run.intake_submitted_at) ?? null
   )
 
+  const completedLists = computed(() =>
+    runs.value.filter(run => run.status === 'closed')
+  )
+
   const intakeReadyToSubmit = computed(() => {
     const run = intakeRun.value
     if (!run) {
@@ -339,11 +419,16 @@ export function useShopRuns() {
     shoppingCompleteRun,
     intakeRun,
     submittedIntakeRun,
+    completedLists,
     intakeReadyToSubmit,
     coordinationBanner,
     loadRuns,
     createRun,
+    createShoppingList,
     addLine,
+    addShoppingListItem,
+    removeShoppingListItem,
+    cancelShoppingList,
     startRun,
     completeShopping,
     startIntake,

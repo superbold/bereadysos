@@ -52,6 +52,8 @@ Run `migrations/20260717120000_solo_restock_complete.sql` — Solo owner Ticket 
 
 Run `migrations/20260718140000_shop_run_line_shopping.sql` — Solo owner Ticket 3: `update_shop_run_line_shopping` for in-store check-off / qty tweaks while status is `shopping`.
 
+Run `migrations/20260719070000_shopping_list_story.sql` — Restock list types (Plan Gap, Supplementary, Both), supplementary item entry with notes, and draft-list cancellation.
+
 ### Migration file names
 
 Files use `YYYYMMDDHHMMSS_description.sql` — the prefix is the **date the migration was authored**, not when you run it in Supabase. New migrations should use today’s timestamp; do not rename files after they have been applied.

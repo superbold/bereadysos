@@ -301,6 +301,7 @@ export type Database = {
           household_id: string
           id: string
           intake_submitted_at: string | null
+          list_type: string
           shopper_user_id: string | null
           shopping_note: string | null
           status: Database['public']['Enums']['shop_run_status']
@@ -313,6 +314,7 @@ export type Database = {
           household_id: string
           id?: string
           intake_submitted_at?: string | null
+          list_type?: string
           shopper_user_id?: string | null
           shopping_note?: string | null
           status?: Database['public']['Enums']['shop_run_status']
@@ -325,6 +327,7 @@ export type Database = {
           household_id?: string
           id?: string
           intake_submitted_at?: string | null
+          list_type?: string
           shopper_user_id?: string | null
           shopping_note?: string | null
           status?: Database['public']['Enums']['shop_run_status']
@@ -397,6 +400,10 @@ export type Database = {
         Args: { p_title?: string }
         Returns: Database['public']['Tables']['shop_runs']['Row']
       }
+      create_shopping_list: {
+        Args: { p_household_id: string, p_list_type: string }
+        Returns: Database['public']['Tables']['shop_runs']['Row']
+      }
       add_shop_run_line: {
         Args: {
           p_run_id: string
@@ -406,6 +413,25 @@ export type Database = {
           p_unit?: string
         }
         Returns: Database['public']['Tables']['shop_run_lines']['Row']
+      }
+      add_shopping_list_item: {
+        Args: {
+          p_run_id: string
+          p_name: string
+          p_category_id: string
+          p_quantity: number
+          p_unit?: string
+          p_note?: string
+        }
+        Returns: Database['public']['Tables']['shop_run_lines']['Row']
+      }
+      remove_shopping_list_item: {
+        Args: { p_line_id: string }
+        Returns: undefined
+      }
+      cancel_shopping_list: {
+        Args: { p_run_id: string }
+        Returns: undefined
       }
       start_shop_run: {
         Args: { p_run_id: string, p_shopper_user_id?: string }

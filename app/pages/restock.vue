@@ -2,6 +2,7 @@
 import { computeAllCategoryGaps } from '#shared/coverage'
 import { formatReportedQuantity, INTAKE_LINE_STATUS_LABELS } from '#shared/shop-run-intake'
 import type { ShopRunLine } from '~/types/database.types'
+import type { ShoppingListType } from '~/composables/useShopRuns'
 
 const toast = useToast()
 const {
@@ -24,8 +25,11 @@ const {
   runs,
   pending,
   working,
-  createRun,
+  createShoppingList,
   addLine,
+  addShoppingListItem,
+  removeShoppingListItem,
+  cancelShoppingList,
   startRun,
   completeShopping,
   startIntake,
@@ -36,11 +40,15 @@ const {
   shoppingCompleteRun,
   intakeRun,
   submittedIntakeRun,
+  completedLists,
   intakeReadyToSubmit
 } = useShopRuns()
 
 const completeNote = ref('')
 const savingLineId = ref<string | null>(null)
+const addingItem = ref(false)
+const removingLineId = ref<string | null>(null)
+const itemFormResetKey = ref(0)
 const noGapsGuidanceOpen = ref(false)
 const canEditShoppingList = computed(() => isHouseholdOwner.value || isShopper.value)
 
@@ -84,6 +92,15 @@ const canStartFromGaps = computed(() =>
 )
 
 const canStartSupplementary = computed(() => !hasActiveCoordinationRun.value)
+const canStartBoth = computed(() =>
+  openGaps.value.length > 0 && !hasActiveCoordinationRun.value
+)
+
+const draftAllowsManualItems = computed(() =>
+  draftRun.value?.list_type === 'supplementary'
+  || draftRun.value?.list_type === 'both'
+  || draftRun.value?.title === 'Restock run'
+)
 
 const activeRun = computed(() =>
   shoppingRun.value
@@ -98,6 +115,9 @@ const continueActiveRunLabel = computed(() => {
   const title = activeRun.value?.title ?? ''
   if (title === 'Supplementary Shopping' || title === 'Restock run') {
     return 'Go to Supplementary Shopping'
+  }
+  if (title.includes('Supplementary')) {
+    return 'Go to combined shopping list'
   }
   return 'Go to Plan Gap'
 })
@@ -157,8 +177,8 @@ function onRestockFromGapsClick() {
   if (hasActiveCoordinationRun.value) {
     noGapsGuidanceOpen.value = false
     toast.add({
-      title: 'Finish your current restock first',
-      description: 'You already have a run in progress. Complete or close it before starting another.',
+      title: 'Finish your active shopping list first',
+      description: 'Complete or cancel the active list before starting another.',
       color: 'warning',
       icon: 'i-lucide-circle-alert'
     })
@@ -171,14 +191,16 @@ function onRestockFromGapsClick() {
   }
 
   noGapsGuidanceOpen.value = false
-  void onCreateFromGaps()
+  void onCreateGapSeededList('plan_gap')
 }
 
-async function onCreateFromGaps() {
-  const { data: run, error: createError } = await createRun('Plan Gap')
+async function onCreateGapSeededList(
+  listType: Exclude<ShoppingListType, 'supplementary'>
+) {
+  const { data: run, error: createError } = await createShoppingList(listType)
   if (createError || !run) {
     toast.add({
-      title: 'Could not start restock run',
+      title: 'Could not start shopping list',
       description: createError?.message ?? 'Unknown error',
       color: 'error',
       icon: 'i-lucide-circle-alert'
@@ -207,8 +229,10 @@ async function onCreateFromGaps() {
   }
 
   toast.add({
-    title: 'Plan Gap list created',
-    description: `${openGaps.value.length} items from your plan gaps.`,
+    title: listType === 'both' ? 'Combined shopping list created' : 'Plan Gap list created',
+    description: listType === 'both'
+      ? `${openGaps.value.length} plan-gap items added. Add any supplementary items below.`
+      : `${openGaps.value.length} items added from your plan gaps.`,
     color: 'success',
     icon: 'i-lucide-shopping-cart'
   })
@@ -216,10 +240,10 @@ async function onCreateFromGaps() {
 
 async function onStartEmptyFromGuidance() {
   noGapsGuidanceOpen.value = false
-  const { error } = await createRun('Supplementary Shopping')
+  const { error } = await createShoppingList('supplementary')
   if (error) {
     toast.add({
-      title: 'Could not start restock run',
+      title: 'Could not start shopping list',
       description: error.message,
       color: 'error',
       icon: 'i-lucide-circle-alert'
@@ -228,7 +252,7 @@ async function onStartEmptyFromGuidance() {
 }
 
 async function onStartSupplementaryShopping() {
-  const { error } = await createRun('Supplementary Shopping')
+  const { error } = await createShoppingList('supplementary')
   if (error) {
     toast.add({
       title: 'Could not start Supplementary Shopping',
@@ -239,10 +263,95 @@ async function onStartSupplementaryShopping() {
   }
 }
 
+async function onStartBoth() {
+  if (!canStartBoth.value) {
+    if (!openGaps.value.length) {
+      noGapsGuidanceOpen.value = true
+    }
+    return
+  }
+  await onCreateGapSeededList('both')
+}
+
+async function onAddShoppingListItem(payload: {
+  name: string
+  category_id: string
+  quantity: number
+  unit: string | null
+  note: string | null
+}) {
+  if (!draftRun.value) {
+    return
+  }
+
+  addingItem.value = true
+  const { error } = await addShoppingListItem(draftRun.value.id, payload)
+  addingItem.value = false
+
+  if (error) {
+    toast.add({
+      title: 'Could not add item',
+      description: error.message,
+      color: 'error',
+      icon: 'i-lucide-circle-alert'
+    })
+    return
+  }
+
+  itemFormResetKey.value += 1
+  toast.add({
+    title: 'Added to shopping list',
+    description: payload.name,
+    color: 'success',
+    icon: 'i-lucide-list-plus'
+  })
+}
+
+async function onRemoveShoppingListItem(line: ShopRunLine) {
+  removingLineId.value = line.id
+  const { error } = await removeShoppingListItem(line.id)
+  removingLineId.value = null
+
+  if (error) {
+    toast.add({
+      title: 'Could not remove item',
+      description: error.message,
+      color: 'error',
+      icon: 'i-lucide-circle-alert'
+    })
+  }
+}
+
+async function onCancelDraftList() {
+  if (!draftRun.value) {
+    return
+  }
+
+  const { error } = await cancelShoppingList(draftRun.value.id)
+  if (error) {
+    toast.add({
+      title: 'Could not cancel shopping list',
+      description: error.message,
+      color: 'error',
+      icon: 'i-lucide-circle-alert'
+    })
+    return
+  }
+
+  toast.add({
+    title: 'Shopping list cancelled',
+    color: 'success',
+    icon: 'i-lucide-trash-2'
+  })
+}
+
 async function scrollToActiveRun() {
   await nextTick()
   const target = document.getElementById('active-shopping-list')
-  target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  if (!target) {
+    return
+  }
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 async function onStartShopping(runId: string) {
@@ -449,7 +558,7 @@ async function onCompleteSoloRestock(runId: string) {
       icon="i-lucide-eye"
       :title="isShopper ? 'You are the shopper' : 'You are watching this plan'"
       :description="isShopper
-        ? 'You can view the shopping list and mark the run complete when done.'
+        ? 'You can view the shopping list and mark shopping complete when done.'
         : 'You have read-only access. Suggestions and owner review come in a later update.'"
       variant="subtle"
       class="mb-6"
@@ -480,7 +589,7 @@ async function onCompleteSoloRestock(runId: string) {
           </h2>
           <p class="mt-1 text-sm text-muted">
             <template v-if="soloOwnerMode">
-              Both paths end the same way: shop the list, log what came home, then update inventory.
+              Choose the list that matches this trip. All three paths end with validated purchases updating Inventory.
             </template>
             <template v-else>
               Build a shopping list from plan gaps or start Supplementary Shopping, then hand off to your shopper.
@@ -488,7 +597,7 @@ async function onCompleteSoloRestock(runId: string) {
           </p>
         </div>
 
-        <div class="grid gap-3 sm:grid-cols-2">
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div class="restock-list-choice">
             <div class="flex items-start gap-2">
               <UIcon
@@ -549,7 +658,46 @@ async function onCompleteSoloRestock(runId: string) {
               @click="onStartSupplementaryShopping"
             />
           </div>
+
+          <div class="restock-list-choice">
+            <div class="flex items-start gap-2">
+              <UIcon
+                name="i-lucide-list-plus"
+                class="mt-0.5 size-5 shrink-0"
+                :class="canStartBoth ? 'text-primary' : 'text-muted'"
+              />
+              <div class="min-w-0">
+                <h3 class="font-semibold text-highlighted">
+                  Let&rsquo;s Do Both!
+                </h3>
+                <p class="mt-1 text-sm text-muted">
+                  Starts with every Plan Gap, then lets you add one-off or supplementary items to the same trip.
+                </p>
+              </div>
+            </div>
+            <UButton
+              label="Start combined list"
+              icon="i-lucide-list-plus"
+              :color="canStartBoth ? 'primary' : 'neutral'"
+              :variant="canStartBoth ? 'solid' : 'soft'"
+              :class="canStartBoth ? undefined : 'restock-cta-unavailable'"
+              :disabled="hasActiveCoordinationRun"
+              :loading="working"
+              :aria-disabled="!canStartBoth"
+              block
+              class="mt-4"
+              @click="onStartBoth"
+            />
+          </div>
         </div>
+
+        <UAlert
+          color="neutral"
+          icon="i-lucide-route"
+          title="Every list follows the same path"
+          description="Shop the list, validate what you actually bought and adjust quantities, then add the validated items to Inventory."
+          variant="subtle"
+        />
 
         <UAlert
           v-if="noGapsGuidanceOpen"
@@ -611,14 +759,26 @@ async function onCompleteSoloRestock(runId: string) {
               {{ runStatusLabel(draftRun) }} &middot; {{ draftRun.lines.length }} items
             </p>
           </div>
-          <UButton
-            v-if="isHouseholdOwner && draftRun.lines.length"
-            :label="soloOwnerMode ? 'Start shopping' : 'Send to shopper'"
-            :icon="soloOwnerMode ? 'i-lucide-shopping-cart' : 'i-lucide-send'"
-            size="sm"
-            :loading="working"
-            @click="onStartShopping(draftRun.id)"
-          />
+          <div class="flex flex-wrap gap-2">
+            <UButton
+              v-if="isHouseholdOwner && draftRun.lines.length"
+              :label="soloOwnerMode ? 'Start shopping' : 'Send to shopper'"
+              :icon="soloOwnerMode ? 'i-lucide-shopping-cart' : 'i-lucide-send'"
+              size="sm"
+              :loading="working"
+              @click="onStartShopping(draftRun.id)"
+            />
+            <UButton
+              v-if="isHouseholdOwner"
+              label="Cancel list"
+              icon="i-lucide-trash-2"
+              size="sm"
+              color="error"
+              variant="ghost"
+              :loading="working"
+              @click="onCancelDraftList"
+            />
+          </div>
         </div>
 
         <ul
@@ -628,25 +788,47 @@ async function onCompleteSoloRestock(runId: string) {
           <li
             v-for="line in draftRun.lines"
             :key="line.id"
-            class="flex items-center justify-between gap-3 p-3 text-sm"
+            class="flex items-start justify-between gap-3 p-3 text-sm"
           >
-            <span class="font-medium text-highlighted">{{ line.name }}</span>
-            <span class="text-muted">
-              <template v-if="line.quantity_planned != null">
-                {{ line.quantity_planned }}{{ line.unit ? ` ${line.unit}` : '' }}
-              </template>
-              <template v-else>
-                As needed
-              </template>
-            </span>
+            <div class="min-w-0">
+              <p class="font-medium text-highlighted">
+                {{ line.name }}
+              </p>
+              <p class="text-muted">
+                <template v-if="line.quantity_planned != null">
+                  {{ line.quantity_planned }}{{ line.unit ? ` ${line.unit}` : '' }}
+                </template>
+                <template v-else>
+                  As needed
+                </template>
+              </p>
+              <p
+                v-if="line.shopper_note"
+                class="mt-1 break-words text-xs text-muted"
+              >
+                {{ line.shopper_note }}
+              </p>
+            </div>
+            <UButton
+              v-if="isHouseholdOwner"
+              icon="i-lucide-x"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              :loading="removingLineId === line.id"
+              :aria-label="`Remove ${line.name}`"
+              @click="onRemoveShoppingListItem(line)"
+            />
           </li>
         </ul>
-        <p
-          v-else
-          class="text-sm text-muted"
-        >
-          Add items for Supplementary Shopping, or restock from plan gaps in a future update.
-        </p>
+
+        <ShoppingListItemForm
+          v-if="isHouseholdOwner && draftAllowsManualItems"
+          :categories="categories"
+          :saving="addingItem"
+          :reset-key="itemFormResetKey"
+          @submit="onAddShoppingListItem"
+        />
       </section>
 
       <section
@@ -829,7 +1011,7 @@ async function onCompleteSoloRestock(runId: string) {
           </h2>
           <p class="mt-1 text-sm text-muted">
             <template v-if="soloOwnerMode">
-              Your restock log is complete. Apply it to inventory to close this run.
+              Your validated shopping list is ready. Apply it to Inventory to finish.
             </template>
             <template v-else-if="isHouseholdOwner">
               The inventory keeper finished logging. Owner accept / send-back review is coming in the next update.
@@ -858,29 +1040,46 @@ async function onCompleteSoloRestock(runId: string) {
         />
       </section>
 
-      <section v-if="runs.length && !shoppingRun">
+      <section class="mt-8">
         <h2 class="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">
-          All runs
+          Completed Shopping Lists
         </h2>
-        <ul class="divide-y divide-default rounded-lg border border-default">
+        <ul
+          v-if="completedLists.length"
+          class="divide-y divide-default rounded-lg border border-default"
+        >
           <li
-            v-for="run in runs"
-            :key="run.id"
-            class="flex flex-col gap-1 p-3 sm:flex-row sm:items-center sm:justify-between"
+            v-for="list in completedLists"
+            :key="list.id"
           >
-            <div>
-              <p class="font-medium text-highlighted">
-                {{ run.title }}
-              </p>
-              <p class="text-sm text-muted">
-                {{ runStatusLabel(run) }} &middot; {{ run.lines.length }} items
-              </p>
-            </div>
-            <p class="text-xs text-muted">
-              {{ new Date(run.created_at).toLocaleDateString() }}
-            </p>
+            <NuxtLink
+              :to="`/restock/${list.id}`"
+              class="flex flex-col gap-1 p-3 transition-colors hover:bg-elevated/60 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div>
+                <p class="font-medium text-highlighted">
+                  {{ list.title }}
+                </p>
+                <p class="text-sm text-muted">
+                  {{ list.lines.length }} item{{ list.lines.length === 1 ? '' : 's' }}
+                </p>
+              </div>
+              <div class="flex items-center gap-2 text-xs text-muted">
+                {{ new Date(list.updated_at).toLocaleDateString() }}
+                <UIcon
+                  name="i-lucide-chevron-right"
+                  class="size-4"
+                />
+              </div>
+            </NuxtLink>
           </li>
         </ul>
+        <p
+          v-else
+          class="rounded-lg border border-dashed border-default px-4 py-6 text-center text-sm text-muted"
+        >
+          Finished shopping lists will appear here after their validated items are added to Inventory.
+        </p>
       </section>
 
       <div
@@ -892,7 +1091,7 @@ async function onCompleteSoloRestock(runId: string) {
           class="mx-auto mb-3 size-10 text-muted"
         />
         <p class="text-sm text-muted">
-          No restock runs yet. The plan owner will start one when it&rsquo;s time to shop.
+          No shopping lists yet. The plan owner will start one when it&rsquo;s time to shop.
         </p>
       </div>
     </template>

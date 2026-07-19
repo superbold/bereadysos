@@ -52,6 +52,8 @@ Short record of choices worth remembering across sessions. Add a dated entry whe
 | **4. Log / put away** | Restock intake (doesn’t write inventory) + manual `/inventory` CRUD | Solo put-away that **updates inventory** from the list (v1 may simplify statuses; multi-role Phase C stays Later) |
 | **5. Stay current** | Alerts + reappearing gaps/expiring; no weekly narrative | Dashboard + alerts nudge back into See → Restock |
 
+**Restock list story (2026-07-19):** Owner chooses one list per trip: **Plan Gap** (auto-filled from coverage shortfalls), **Supplementary Shopping** (owner-added one-offs with category, quantity, unit, and notes), or **Let’s Do Both** (gap seed + supplementary items). The list is checked and quantity-adjusted while shopping, validated against what came home, then applied to Inventory. Only closed lists appear in **Completed Shopping Lists**; active lists render once and can be continued or cancelled while still a draft.
+
 **Rejected for v1 primary surface:** Guided Restock-as-home (helper status chrome, poor “all clear”); new Maintain route (extra nav until proven necessary).
 
 **Build order implied:** Ticket 6 (See on Dashboard) + ticket 2 (solo Restock) can proceed from this map; Prefer Dashboard CTA shaping in ticket 6, solo path simplification in ticket 2 (they can interleave).

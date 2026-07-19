@@ -134,7 +134,7 @@ Ship guidance **per phase** — fewer decisions, clearer next action, mobile-fir
 
 1. [x] **Define the solo loop UX** — Map + decision: [DECISIONS — Solo loop UX map](./DECISIONS.md#solo-loop-ux-map-ticket-1). **Dashboard** = See / next action; **Restock** = execution (plan trip → shop → log). No new Maintain page for v1.
 2. [x] **Solo restock path** — Owner creates list from gaps → marks bought / done → **updates inventory** via `complete_solo_restock_run` (slice 1 RPC + slice 2 Restock UI). Multi-role handoff copy remains for helpers.
-3. [x] **Mobile shopping list** — Phone-as-list on Restock while `shopping`: large check-off, qty steppers, progress, sticky Done; persists via `update_shop_run_line_shopping`.
+3. [x] **Mobile shopping list** — Restock offers Plan Gap, Supplementary, or combined lists; supplementary items support category / qty / unit / notes. Phone-as-list while `shopping`: large check-off, qty steppers, progress, sticky Done; validated purchases flow into Inventory. Completed lists link to a detail page.
 4. **Fast put-away / log** — After shopping, shortest path to update inventory from the list; research spike: camera or barcode to create/update items (prototype one assist, not a full scanner product).
 5. **De-emphasize roles UI** — Settings/sharing and Restock copy: don’t lead with four roles; “Add help later” / advanced for helpers.
 6. [x] **Owner “See” pass** — Dashboard **This week** card via `computeOwnerNextAction` (restock → gaps → expired → expiring → empty → on target); plan-gap alerts link to Restock; Plan page **Restock from gaps** CTA.
