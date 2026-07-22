@@ -713,161 +713,6 @@ async function onCompleteSoloRestock(runId: string) {
       </section>
 
       <section
-        v-if="isHouseholdOwner"
-        class="panel"
-      >
-        <div>
-          <h2 class="text-sm font-semibold text-highlighted">
-            Choose a list type
-          </h2>
-          <p class="mt-1 text-sm text-muted">
-            <template v-if="soloOwnerMode">
-              Choose the list that matches this trip. All three paths end with validated purchases updating Inventory.
-            </template>
-            <template v-else>
-              Build a shopping list from plan gaps or start Supplementary Shopping, then hand off to your shopper.
-            </template>
-          </p>
-        </div>
-
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <div class="restock-list-choice">
-            <div class="flex items-start gap-2">
-              <UIcon
-                name="i-lucide-clipboard-list"
-                class="mt-0.5 size-5 shrink-0"
-                :class="canStartFromGaps ? 'text-primary' : 'text-muted'"
-              />
-              <div class="min-w-0">
-                <h3 class="font-semibold text-highlighted">
-                  Plan Gap
-                </h3>
-                <p class="mt-1 text-sm text-muted">
-                  Builds a shopping list from what your Plan still needs — coverage shortfalls like water, food, or kit items.
-                </p>
-              </div>
-            </div>
-            <UButton
-              label="Start Plan Gap list"
-              icon="i-lucide-list-plus"
-              :color="canStartFromGaps ? 'primary' : 'neutral'"
-              :variant="canStartFromGaps ? 'solid' : 'soft'"
-              :class="canStartFromGaps ? undefined : 'restock-cta-unavailable'"
-              :loading="working"
-              :aria-disabled="!canStartFromGaps"
-              block
-              class="mt-4"
-              @click="onRestockFromGapsClick"
-            />
-          </div>
-
-          <div class="restock-list-choice">
-            <div class="flex items-start gap-2">
-              <UIcon
-                name="i-lucide-shopping-bag"
-                class="mt-0.5 size-5 shrink-0"
-                :class="canStartSupplementary ? 'text-primary' : 'text-muted'"
-              />
-              <div class="min-w-0">
-                <h3 class="font-semibold text-highlighted">
-                  Supplementary Shopping
-                </h3>
-                <p class="mt-1 text-sm text-muted">
-                  For when you want to shop outside the gap for one-off supplies, extras, or things Plan doesn’t track yet.
-                </p>
-              </div>
-            </div>
-            <UButton
-              label="Start Supplementary Shopping"
-              icon="i-lucide-plus"
-              :color="canStartSupplementary ? 'primary' : 'neutral'"
-              :variant="canStartSupplementary ? 'solid' : 'soft'"
-              :class="canStartSupplementary ? undefined : 'restock-cta-unavailable'"
-              :disabled="!canStartSupplementary"
-              :loading="working"
-              :aria-disabled="!canStartSupplementary"
-              block
-              class="mt-4"
-              @click="onStartSupplementaryShopping"
-            />
-          </div>
-
-          <div class="restock-list-choice">
-            <div class="flex items-start gap-2">
-              <UIcon
-                name="i-lucide-list-plus"
-                class="mt-0.5 size-5 shrink-0"
-                :class="canStartBoth ? 'text-primary' : 'text-muted'"
-              />
-              <div class="min-w-0">
-                <h3 class="font-semibold text-highlighted">
-                  Let&rsquo;s Do Both!
-                </h3>
-                <p class="mt-1 text-sm text-muted">
-                  Starts with every Plan Gap, then lets you add one-off or supplementary items to the same trip.
-                </p>
-              </div>
-            </div>
-            <UButton
-              label="Start combined list"
-              icon="i-lucide-list-plus"
-              :color="canStartBoth ? 'primary' : 'neutral'"
-              :variant="canStartBoth ? 'solid' : 'soft'"
-              :class="canStartBoth ? undefined : 'restock-cta-unavailable'"
-              :disabled="hasActiveCoordinationRun"
-              :loading="working"
-              :aria-disabled="!canStartBoth"
-              block
-              class="mt-4"
-              @click="onStartBoth"
-            />
-          </div>
-        </div>
-
-        <UAlert
-          color="neutral"
-          icon="i-lucide-route"
-          title="Every list follows the same path"
-          description="Shop the list, validate what you actually bought and adjust quantities, then add the validated items to Inventory."
-          variant="subtle"
-        />
-
-        <UAlert
-          v-if="noGapsGuidanceOpen"
-          color="warning"
-          icon="i-lucide-circle-help"
-          title="There are no plan gaps right now"
-          description="Your inventory meets your target (or Plan has nothing short). Would you like to start Supplementary Shopping instead for one-off supplies outside the gaps?"
-          variant="subtle"
-        >
-          <template #actions>
-            <UButton
-              label="Start Supplementary Shopping"
-              icon="i-lucide-plus"
-              size="sm"
-              color="primary"
-              :loading="working"
-              @click="onStartEmptyFromGuidance"
-            />
-            <UButton
-              label="Not now"
-              size="sm"
-              color="neutral"
-              variant="ghost"
-              @click="noGapsGuidanceOpen = false"
-            />
-          </template>
-        </UAlert>
-
-        <p
-          v-else-if="hasActiveCoordinationRun"
-          class="text-sm text-muted"
-        >
-          Finish or cancel the active list above before starting another.
-        </p>
-      </section>
-
-      <section
         v-if="draftRun"
         id="active-shopping-list"
         class="panel"
@@ -1160,6 +1005,161 @@ async function onCompleteSoloRestock(runId: string) {
           :loading="working"
           @click="onCompleteSoloRestock(submittedIntakeRun.id)"
         />
+      </section>
+
+      <section
+        v-if="isHouseholdOwner"
+        class="panel"
+      >
+        <div>
+          <h2 class="text-sm font-semibold text-highlighted">
+            Choose a list type
+          </h2>
+          <p class="mt-1 text-sm text-muted">
+            <template v-if="soloOwnerMode">
+              Choose the list that matches this trip. All three paths end with validated purchases updating Inventory.
+            </template>
+            <template v-else>
+              Build a shopping list from plan gaps or start Supplementary Shopping, then hand off to your shopper.
+            </template>
+          </p>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="restock-list-choice">
+            <div class="flex items-start gap-2">
+              <UIcon
+                name="i-lucide-clipboard-list"
+                class="mt-0.5 size-5 shrink-0"
+                :class="canStartFromGaps ? 'text-primary' : 'text-muted'"
+              />
+              <div class="min-w-0">
+                <h3 class="font-semibold text-highlighted">
+                  Plan Gap
+                </h3>
+                <p class="mt-1 text-sm text-muted">
+                  Builds a shopping list from what your Plan still needs — coverage shortfalls like water, food, or kit items.
+                </p>
+              </div>
+            </div>
+            <UButton
+              label="Start Plan Gap list"
+              icon="i-lucide-list-plus"
+              :color="canStartFromGaps ? 'primary' : 'neutral'"
+              :variant="canStartFromGaps ? 'solid' : 'soft'"
+              :class="canStartFromGaps ? undefined : 'restock-cta-unavailable'"
+              :loading="working"
+              :aria-disabled="!canStartFromGaps"
+              block
+              class="mt-4"
+              @click="onRestockFromGapsClick"
+            />
+          </div>
+
+          <div class="restock-list-choice">
+            <div class="flex items-start gap-2">
+              <UIcon
+                name="i-lucide-shopping-bag"
+                class="mt-0.5 size-5 shrink-0"
+                :class="canStartSupplementary ? 'text-primary' : 'text-muted'"
+              />
+              <div class="min-w-0">
+                <h3 class="font-semibold text-highlighted">
+                  Supplementary Shopping
+                </h3>
+                <p class="mt-1 text-sm text-muted">
+                  For when you want to shop outside the gap for one-off supplies, extras, or things Plan doesn’t track yet.
+                </p>
+              </div>
+            </div>
+            <UButton
+              label="Start Supplementary Shopping"
+              icon="i-lucide-plus"
+              :color="canStartSupplementary ? 'primary' : 'neutral'"
+              :variant="canStartSupplementary ? 'solid' : 'soft'"
+              :class="canStartSupplementary ? undefined : 'restock-cta-unavailable'"
+              :disabled="!canStartSupplementary"
+              :loading="working"
+              :aria-disabled="!canStartSupplementary"
+              block
+              class="mt-4"
+              @click="onStartSupplementaryShopping"
+            />
+          </div>
+
+          <div class="restock-list-choice">
+            <div class="flex items-start gap-2">
+              <UIcon
+                name="i-lucide-list-plus"
+                class="mt-0.5 size-5 shrink-0"
+                :class="canStartBoth ? 'text-primary' : 'text-muted'"
+              />
+              <div class="min-w-0">
+                <h3 class="font-semibold text-highlighted">
+                  Let&rsquo;s Do Both!
+                </h3>
+                <p class="mt-1 text-sm text-muted">
+                  Starts with every Plan Gap, then lets you add one-off or supplementary items to the same trip.
+                </p>
+              </div>
+            </div>
+            <UButton
+              label="Start combined list"
+              icon="i-lucide-list-plus"
+              :color="canStartBoth ? 'primary' : 'neutral'"
+              :variant="canStartBoth ? 'solid' : 'soft'"
+              :class="canStartBoth ? undefined : 'restock-cta-unavailable'"
+              :disabled="hasActiveCoordinationRun"
+              :loading="working"
+              :aria-disabled="!canStartBoth"
+              block
+              class="mt-4"
+              @click="onStartBoth"
+            />
+          </div>
+        </div>
+
+        <UAlert
+          color="neutral"
+          icon="i-lucide-route"
+          title="Every list follows the same path"
+          description="Shop the list, validate what you actually bought and adjust quantities, then add the validated items to Inventory."
+          variant="subtle"
+        />
+
+        <UAlert
+          v-if="noGapsGuidanceOpen"
+          color="warning"
+          icon="i-lucide-circle-help"
+          title="There are no plan gaps right now"
+          description="Your inventory meets your target (or Plan has nothing short). Would you like to start Supplementary Shopping instead for one-off supplies outside the gaps?"
+          variant="subtle"
+        >
+          <template #actions>
+            <UButton
+              label="Start Supplementary Shopping"
+              icon="i-lucide-plus"
+              size="sm"
+              color="primary"
+              :loading="working"
+              @click="onStartEmptyFromGuidance"
+            />
+            <UButton
+              label="Not now"
+              size="sm"
+              color="neutral"
+              variant="ghost"
+              @click="noGapsGuidanceOpen = false"
+            />
+          </template>
+        </UAlert>
+
+        <p
+          v-else-if="hasActiveCoordinationRun"
+          class="text-sm text-muted"
+        >
+          Finish or cancel the active list above before starting another.
+        </p>
       </section>
 
       <section
