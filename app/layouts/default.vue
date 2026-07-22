@@ -16,7 +16,7 @@ const {
 } = useShopRuns()
 
 const mobileNavOpen = ref(false)
-const restockMenuOpen = ref(false)
+const restockPanelOpen = ref(false)
 
 const desktopNavItems = [
   { label: 'Dashboard', to: '/', icon: 'i-lucide-layout-dashboard' },
@@ -101,7 +101,7 @@ const restockSubItems = computed(() => [
   },
   {
     key: 'completed',
-    label: 'Completed Lists',
+    label: 'Completed Shopping Lists',
     icon: 'i-lucide-history',
     to: '/restock#completed',
     disabled: completedLists.value.length === 0,
@@ -138,11 +138,19 @@ watch(user, async (value) => {
   await Promise.all([fetchCategories(), fetchItems()])
 }, { immediate: true })
 
-watch(isRestockActive, (active) => {
-  if (active) {
-    restockMenuOpen.value = true
+watch(mobileNavOpen, (open) => {
+  if (!open) {
+    restockPanelOpen.value = false
   }
-}, { immediate: true })
+})
+
+function openRestockPanel() {
+  restockPanelOpen.value = true
+}
+
+function closeRestockPanel() {
+  restockPanelOpen.value = false
+}
 
 function onRestockSubItemClick(item: {
   to: string
@@ -158,7 +166,7 @@ function onRestockSubItemClick(item: {
     })
     return
   }
-  restockMenuOpen.value = false
+  restockPanelOpen.value = false
   mobileNavOpen.value = false
   navigateTo(item.to)
 }
@@ -252,42 +260,114 @@ async function signOut() {
       </template>
 
       <template #body>
-        <nav v-if="user">
-          <ul class="space-y-2">
-            <li
-              v-for="item in mobilePrimaryItemsBefore"
-              :key="item.to"
+        <nav
+          v-if="user"
+          class="overflow-x-hidden"
+          :aria-label="restockPanelOpen ? 'Restock menu' : 'Main menu'"
+        >
+          <Transition
+            :name="restockPanelOpen ? 'mobile-nav-forward' : 'mobile-nav-back'"
+            mode="out-in"
+          >
+            <div
+              v-if="!restockPanelOpen"
+              key="root"
             >
-              <UButton
-                :to="item.to"
-                :label="item.label"
-                :icon="item.icon"
-                :color="item.active ? 'primary' : 'neutral'"
-                :variant="item.active ? 'soft' : 'ghost'"
-                size="xl"
-                block
-                class="min-h-14 justify-start px-4 text-base"
-                :aria-current="item.active ? 'page' : undefined"
-              />
-            </li>
+              <ul class="space-y-2">
+                <li
+                  v-for="item in mobilePrimaryItemsBefore"
+                  :key="item.to"
+                >
+                  <UButton
+                    :to="item.to"
+                    :label="item.label"
+                    :icon="item.icon"
+                    :color="item.active ? 'primary' : 'neutral'"
+                    :variant="item.active ? 'soft' : 'ghost'"
+                    size="xl"
+                    block
+                    class="min-h-14 justify-start px-4 text-base"
+                    :aria-current="item.active ? 'page' : undefined"
+                  />
+                </li>
 
-            <li>
+                <li>
+                  <UButton
+                    label="Restock"
+                    icon="i-lucide-shopping-cart"
+                    trailing-icon="i-lucide-chevron-right"
+                    :color="isRestockActive ? 'primary' : 'neutral'"
+                    :variant="isRestockActive ? 'soft' : 'ghost'"
+                    size="xl"
+                    block
+                    class="min-h-14 justify-start px-4 text-base"
+                    :aria-expanded="restockPanelOpen"
+                    aria-haspopup="true"
+                    @click="openRestockPanel"
+                  />
+                </li>
+
+                <li
+                  v-for="item in mobilePrimaryItemsAfter"
+                  :key="item.to"
+                >
+                  <UButton
+                    :to="item.to"
+                    :label="item.label"
+                    :icon="item.icon"
+                    :color="item.active ? 'primary' : 'neutral'"
+                    :variant="item.active ? 'soft' : 'ghost'"
+                    size="xl"
+                    block
+                    class="min-h-14 justify-start px-4 text-base"
+                    :aria-current="item.active ? 'page' : undefined"
+                  />
+                </li>
+
+                <li>
+                  <UButton
+                    to="/settings"
+                    label="Settings"
+                    icon="i-lucide-settings"
+                    :color="isActiveNavItem('/settings') ? 'primary' : 'neutral'"
+                    :variant="isActiveNavItem('/settings') ? 'soft' : 'ghost'"
+                    size="xl"
+                    block
+                    class="min-h-14 justify-start px-4 text-base"
+                    :aria-current="isActiveNavItem('/settings') ? 'page' : undefined"
+                  />
+                </li>
+              </ul>
+              <USeparator class="my-4" />
               <UButton
-                label="Restock"
-                icon="i-lucide-shopping-cart"
-                :trailing-icon="restockMenuOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-                :color="isRestockActive ? 'primary' : 'neutral'"
-                :variant="isRestockActive ? 'soft' : 'ghost'"
+                label="Sign out"
+                icon="i-lucide-log-out"
+                color="neutral"
+                variant="ghost"
                 size="xl"
                 block
                 class="min-h-14 justify-start px-4 text-base"
-                :aria-expanded="restockMenuOpen"
-                @click="restockMenuOpen = !restockMenuOpen"
+                @click="signOut"
               />
-              <ul
-                v-if="restockMenuOpen"
-                class="mt-2 space-y-1 border-l-2 border-default pl-3"
-              >
+            </div>
+
+            <div
+              v-else
+              key="restock"
+            >
+              <ul class="space-y-2">
+                <li>
+                  <UButton
+                    label="Restock"
+                    icon="i-lucide-chevron-left"
+                    :color="isRestockActive ? 'primary' : 'neutral'"
+                    :variant="isRestockActive ? 'soft' : 'ghost'"
+                    size="xl"
+                    block
+                    class="min-h-14 justify-start px-4 text-base"
+                    @click="closeRestockPanel"
+                  />
+                </li>
                 <li
                   v-for="item in restockSubItems"
                   :key="item.key"
@@ -297,59 +377,17 @@ async function signOut() {
                     :icon="item.icon"
                     color="neutral"
                     variant="ghost"
-                    size="lg"
+                    size="xl"
                     block
-                    class="min-h-12 justify-start px-3 text-sm"
+                    class="min-h-14 justify-start px-4 text-base"
                     :class="item.disabled ? 'restock-cta-unavailable' : undefined"
                     :aria-disabled="item.disabled"
                     @click="onRestockSubItemClick(item)"
                   />
                 </li>
               </ul>
-            </li>
-
-            <li
-              v-for="item in mobilePrimaryItemsAfter"
-              :key="item.to"
-            >
-              <UButton
-                :to="item.to"
-                :label="item.label"
-                :icon="item.icon"
-                :color="item.active ? 'primary' : 'neutral'"
-                :variant="item.active ? 'soft' : 'ghost'"
-                size="xl"
-                block
-                class="min-h-14 justify-start px-4 text-base"
-                :aria-current="item.active ? 'page' : undefined"
-              />
-            </li>
-
-            <li>
-              <UButton
-                to="/settings"
-                label="Settings"
-                icon="i-lucide-settings"
-                :color="isActiveNavItem('/settings') ? 'primary' : 'neutral'"
-                :variant="isActiveNavItem('/settings') ? 'soft' : 'ghost'"
-                size="xl"
-                block
-                class="min-h-14 justify-start px-4 text-base"
-                :aria-current="isActiveNavItem('/settings') ? 'page' : undefined"
-              />
-            </li>
-          </ul>
-          <USeparator class="my-4" />
-          <UButton
-            label="Sign out"
-            icon="i-lucide-log-out"
-            color="neutral"
-            variant="ghost"
-            size="xl"
-            block
-            class="min-h-14 justify-start px-4 text-base"
-            @click="signOut"
-          />
+            </div>
+          </Transition>
         </nav>
       </template>
     </UHeader>

@@ -906,3 +906,31 @@
 .restock-list-choice {
   @apply rounded-lg border border-default bg-default p-4;
 }
+
+/* Hamburger drill-down: main menu ↔ Restock submenu */
+.mobile-nav-forward-enter-active,
+.mobile-nav-forward-leave-active,
+.mobile-nav-back-enter-active,
+.mobile-nav-back-leave-active {
+  transition: transform 280ms ease-out, opacity 200ms ease-out;
+}
+
+.mobile-nav-forward-enter-from {
+  transform: translateX(1.25rem);
+  opacity: 0;
+}
+
+.mobile-nav-forward-leave-to {
+  transform: translateX(-1.25rem);
+  opacity: 0;
+}
+
+.mobile-nav-back-enter-from {
+  transform: translateX(-1.25rem);
+  opacity: 0;
+}
+
+.mobile-nav-back-leave-to {
+  transform: translateX(1.25rem);
+  opacity: 0;
+}
