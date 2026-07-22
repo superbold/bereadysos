@@ -5,6 +5,8 @@ import type { ShopRunLine } from '~/types/database.types'
 import type { ShoppingListType } from '~/composables/useShopRuns'
 
 const toast = useToast()
+const route = useRoute()
+const router = useRouter()
 const {
   household,
   pending: householdPending,
@@ -112,14 +114,14 @@ const activeRun = computed(() =>
 )
 
 const continueActiveRunLabel = computed(() => {
-  const title = activeRun.value?.title ?? ''
-  if (title === 'Supplementary Shopping' || title === 'Restock run') {
-    return 'Go to Supplementary Shopping'
+  const listType = activeRun.value?.list_type
+  if (listType === 'supplementary' || activeRun.value?.title === 'Restock run') {
+    return 'Continue Supplementary Shopping'
   }
-  if (title.includes('Supplementary')) {
-    return 'Go to combined shopping list'
+  if (listType === 'both') {
+    return 'Continue combined list'
   }
-  return 'Go to Plan Gap'
+  return 'Continue Plan Gap shopping'
 })
 
 const coordinationStatusLabels: Record<string, string> = {
@@ -155,6 +157,43 @@ function runStatusLabel(run: { status: string, intake_submitted_at: string | nul
   return statusLabels.value[run.status] ?? run.status
 }
 
+const activeListPromptTitle = computed(() => {
+  const listType = activeRun.value?.list_type
+  if (listType === 'supplementary' || activeRun.value?.title === 'Restock run') {
+    return 'Continue your Supplementary Shopping?'
+  }
+  if (listType === 'both') {
+    return 'Continue your combined shopping list?'
+  }
+  return 'Continue your Plan Gap shopping?'
+})
+
+const activeListPromptDetail = computed(() => {
+  const run = activeRun.value
+  if (!run) {
+    return ''
+  }
+
+  const status = runStatusLabel(run)
+  const count = run.lines.length
+  const itemWord = count === 1 ? 'item' : 'items'
+
+  if (run.status === 'shopping') {
+    const checked = run.lines.filter(line => line.line_status !== 'pending').length
+    return `${status} · ${checked} of ${count} checked · not closed out yet`
+  }
+
+  if (run.status === 'draft') {
+    return `${status} · ${count} ${itemWord} · not closed out yet`
+  }
+
+  return `${status} · ${count} ${itemWord}`
+})
+
+const canCancelActiveList = computed(() =>
+  Boolean(draftRun.value && isHouseholdOwner.value)
+)
+
 async function loadData() {
   await fetchCategories()
   await fetchItems()
@@ -165,6 +204,7 @@ onMounted(async () => {
     await ensureHousehold()
   }
   await loadData()
+  await handleRestockDeepLink()
 })
 
 watch(household, async (value) => {
@@ -172,6 +212,64 @@ watch(household, async (value) => {
     await loadData()
   }
 })
+
+watch(
+  () => [route.query.start, route.hash, hasActiveCoordinationRun.value, openGaps.value.length],
+  async () => {
+    await handleRestockDeepLink()
+  }
+)
+
+async function handleRestockDeepLink() {
+  await nextTick()
+
+  if (route.hash === '#completed') {
+    document.getElementById('completed-shopping-lists')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    })
+  }
+
+  const start = typeof route.query.start === 'string' ? route.query.start : null
+  if (!start || !isHouseholdOwner.value) {
+    return
+  }
+
+  const clearStartQuery = async () => {
+    const query = { ...route.query }
+    delete query.start
+    await router.replace({ query, hash: route.hash || undefined })
+  }
+
+  if (hasActiveCoordinationRun.value) {
+    await clearStartQuery()
+    toast.add({
+      title: 'Finish your active shopping list first',
+      description: 'Complete or cancel the active list before starting another.',
+      color: 'warning',
+      icon: 'i-lucide-circle-alert'
+    })
+    scrollToActiveRun()
+    return
+  }
+
+  if (start === 'plan_gap') {
+    await clearStartQuery()
+    onRestockFromGapsClick()
+    return
+  }
+
+  if (start === 'supplementary') {
+    await clearStartQuery()
+    await onStartSupplementaryShopping()
+    return
+  }
+
+  if (start === 'both') {
+    await clearStartQuery()
+    await onStartBoth()
+  }
+}
 
 function onRestockFromGapsClick() {
   if (hasActiveCoordinationRun.value) {
@@ -580,7 +678,42 @@ async function onCompleteSoloRestock(runId: string) {
 
     <template v-else-if="household">
       <section
-        v-if="isHouseholdOwner && !shoppingRun"
+        v-if="hasActiveCoordinationRun"
+        class="panel panel--emphasize"
+      >
+        <div>
+          <h2 class="text-lg font-semibold tracking-tight text-highlighted">
+            {{ activeListPromptTitle }}
+          </h2>
+          <p class="mt-1 text-sm text-muted">
+            {{ activeListPromptDetail }}
+          </p>
+        </div>
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <UButton
+            :label="continueActiveRunLabel"
+            icon="i-lucide-arrow-down"
+            color="success"
+            variant="solid"
+            size="lg"
+            class="sm:flex-1"
+            @click="scrollToActiveRun"
+          />
+          <UButton
+            v-if="canCancelActiveList"
+            label="Cancel list"
+            icon="i-lucide-trash-2"
+            color="error"
+            variant="outline"
+            size="lg"
+            :loading="working"
+            @click="onCancelDraftList"
+          />
+        </div>
+      </section>
+
+      <section
+        v-if="isHouseholdOwner"
         class="panel"
       >
         <div>
@@ -726,23 +859,12 @@ async function onCompleteSoloRestock(runId: string) {
           </template>
         </UAlert>
 
-        <div
+        <p
           v-else-if="hasActiveCoordinationRun"
-          class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+          class="text-sm text-muted"
         >
-          <p class="text-sm text-muted">
-            Please finish the active list first before starting another —
-          </p>
-          <UButton
-            :label="continueActiveRunLabel"
-            icon="i-lucide-arrow-down"
-            size="sm"
-            color="primary"
-            variant="solid"
-            class="shrink-0"
-            @click="scrollToActiveRun"
-          />
-        </div>
+          Finish or cancel the active list above before starting another.
+        </p>
       </section>
 
       <section
@@ -1040,7 +1162,10 @@ async function onCompleteSoloRestock(runId: string) {
         />
       </section>
 
-      <section class="mt-8">
+      <section
+        id="completed-shopping-lists"
+        class="mt-8"
+      >
         <h2 class="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">
           Completed Shopping Lists
         </h2>
