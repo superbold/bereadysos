@@ -1013,7 +1013,7 @@ async function onCompleteSoloRestock(runId: string) {
       >
         <div>
           <h2 class="text-sm font-semibold text-highlighted">
-            Choose a list type
+            Choose a shopping list type
           </h2>
           <p class="mt-1 text-sm text-muted">
             <template v-if="soloOwnerMode">
