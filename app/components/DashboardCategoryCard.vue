@@ -54,10 +54,19 @@ const summary = computed(() => {
 const progressValue = computed(() => {
   return Math.min(props.coverage.percent, 100)
 })
+
+const inventoryTo = computed(() => ({
+  path: '/inventory',
+  query: { category: props.coverage.categoryId }
+}))
 </script>
 
 <template>
-  <div class="rounded-lg border border-default p-4">
+  <NuxtLink
+    :to="inventoryTo"
+    class="block rounded-lg border border-default p-4 transition-colors hover:bg-elevated/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    :aria-label="`View ${coverage.name} in inventory`"
+  >
     <div class="mb-3 flex items-start justify-between gap-3">
       <div class="flex min-w-0 items-center gap-3">
         <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-elevated">
@@ -90,5 +99,5 @@ const progressValue = computed(() => {
       :color="statusColor"
       size="sm"
     />
-  </div>
+  </NuxtLink>
 </template>

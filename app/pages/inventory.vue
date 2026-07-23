@@ -3,6 +3,8 @@ import type { ItemWithCategory } from '~/composables/useInventory'
 import { formatWaterInventoryLabel } from '#shared/water-volume'
 
 const toast = useToast()
+const route = useRoute()
+const router = useRouter()
 const { household, pending: householdPending, ensureHousehold, canEditInventory, isReadOnlyOnPlan } = useHousehold()
 const {
   categories,
@@ -42,6 +44,41 @@ const categoryFilterOptions = computed(() => [
   }))
 ])
 
+watch(
+  () => route.query.category,
+  (raw) => {
+    const id = typeof raw === 'string' ? raw : null
+    categoryFilter.value = id ?? 'all'
+  },
+  { immediate: true }
+)
+
+watch(categoryFilter, (value) => {
+  const current = typeof route.query.category === 'string' ? route.query.category : null
+  const next = value === 'all' ? null : value
+  if (current === next) {
+    return
+  }
+  const query = { ...route.query }
+  if (next) {
+    query.category = next
+  }
+  else {
+    delete query.category
+  }
+  void router.replace({ query })
+})
+
+watch(categories, (list) => {
+  if (
+    categoryFilter.value !== 'all'
+    && list.length
+    && !list.some(category => category.id === categoryFilter.value)
+  ) {
+    categoryFilter.value = 'all'
+  }
+})
+
 const filteredItems = computed(() => {
   const query = search.value.trim().toLowerCase()
   return items.value.filter((item) => {
@@ -66,6 +103,11 @@ const filteredItems = computed(() => {
 })
 
 const isLoading = computed(() => householdPending.value || (pending.value && !items.value.length))
+
+function clearFilters() {
+  search.value = ''
+  categoryFilter.value = 'all'
+}
 
 function openAddForm() {
   editingItem.value = null
@@ -325,7 +367,7 @@ function closeDeleteModal() {
           variant="ghost"
           size="sm"
           class="mt-3"
-          @click="search = ''; categoryFilter = 'all'"
+          @click="clearFilters"
         />
       </div>
 
