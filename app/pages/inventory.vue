@@ -62,8 +62,7 @@ watch(categoryFilter, (value) => {
   const query = { ...route.query }
   if (next) {
     query.category = next
-  }
-  else {
+  } else {
     delete query.category
   }
   void router.replace({ query })
