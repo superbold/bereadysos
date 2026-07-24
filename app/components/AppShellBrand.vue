@@ -15,8 +15,7 @@ const { planLabel, hasMultiplePlans } = useHouseholdPlan()
     />
     <span class="min-w-0">
       <span class="app-shell__brand-title block font-semibold text-highlighted leading-tight">
-        <span class="hidden sm:inline">SOS Planner</span>
-        <span class="sm:hidden">SOS</span>
+        SOS Planner
       </span>
       <span class="block truncate text-xs font-medium text-muted leading-tight">
         {{ planLabel }}
