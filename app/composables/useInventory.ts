@@ -4,6 +4,12 @@ export type ItemWithCategory = Item & {
   category: Category
 }
 
+type FetchResult<T> = { data: T | null, error: { message: string } | null }
+
+let categoriesInFlight: Promise<FetchResult<Category[]>> | null = null
+let itemsInFlight: Promise<FetchResult<ItemWithCategory[]>> | null = null
+let itemsInFlightHouseholdId: string | null = null
+
 export function useInventory() {
   const supabase = useSupabaseClient<Database>()
   const { household } = useHousehold()
@@ -12,46 +18,106 @@ export function useInventory() {
   const items = useState<ItemWithCategory[]>('inventory-items', () => [])
   const pending = useState('inventory-pending', () => false)
   const error = useState<string | null>('inventory-error', () => null)
+  const itemsHouseholdId = useState<string | null>('inventory-items-household-id', () => null)
+  const categoriesLoaded = useState('inventory-categories-loaded', () => false)
 
-  async function fetchCategories() {
-    const { data, error: fetchError } = await supabase
-      .from('categories')
-      .select('*')
-      .order('sort_order')
-
-    if (fetchError) {
-      return { data: null, error: fetchError }
+  async function fetchCategories(options: { force?: boolean } = {}) {
+    if (!options.force && categoriesLoaded.value && categories.value.length) {
+      return { data: categories.value, error: null }
     }
 
-    categories.value = data
-    return { data, error: null }
+    if (categoriesInFlight) {
+      return categoriesInFlight
+    }
+
+    categoriesInFlight = (async (): Promise<FetchResult<Category[]>> => {
+      const { data, error: fetchError } = await supabase
+        .from('categories')
+        .select('*')
+        .order('sort_order')
+
+      if (fetchError) {
+        return { data: null, error: fetchError }
+      }
+
+      categories.value = data
+      categoriesLoaded.value = true
+      return { data, error: null }
+    })()
+
+    try {
+      return await categoriesInFlight
+    } finally {
+      categoriesInFlight = null
+    }
   }
 
-  async function fetchItems() {
+  async function fetchItems(options: { force?: boolean } = {}) {
     const householdId = household.value?.id
     if (!householdId) {
-      items.value = []
-      return { data: [], error: null }
+      return { data: items.value, error: null }
     }
 
-    pending.value = true
-    error.value = null
+    if (
+      !options.force
+      && itemsHouseholdId.value === householdId
+      && !itemsInFlight
+    ) {
+      return { data: items.value, error: null }
+    }
 
-    const { data, error: fetchError } = await supabase
-      .from('items')
-      .select('*, category:categories(*)')
-      .eq('household_id', householdId)
-      .order('name')
+    if (itemsInFlight && itemsInFlightHouseholdId === householdId) {
+      return itemsInFlight
+    }
 
+    if (itemsInFlight) {
+      await itemsInFlight
+      if (!options.force && itemsHouseholdId.value === householdId) {
+        return { data: items.value, error: null }
+      }
+    }
+
+    itemsInFlightHouseholdId = householdId
+    itemsInFlight = (async (): Promise<FetchResult<ItemWithCategory[]>> => {
+      pending.value = true
+      error.value = null
+
+      const { data, error: fetchError } = await supabase
+        .from('items')
+        .select('*, category:categories(*)')
+        .eq('household_id', householdId)
+        .order('name')
+
+      pending.value = false
+
+      if (fetchError) {
+        error.value = fetchError.message
+        return { data: null, error: fetchError }
+      }
+
+      items.value = data as ItemWithCategory[]
+      itemsHouseholdId.value = householdId
+      return { data: items.value, error: null }
+    })()
+
+    try {
+      return await itemsInFlight
+    } finally {
+      itemsInFlight = null
+      itemsInFlightHouseholdId = null
+    }
+  }
+
+  function clearInventory() {
+    categories.value = []
+    items.value = []
+    itemsHouseholdId.value = null
+    categoriesLoaded.value = false
     pending.value = false
-
-    if (fetchError) {
-      error.value = fetchError.message
-      return { data: null, error: fetchError }
-    }
-
-    items.value = data as ItemWithCategory[]
-    return { data: items.value, error: null }
+    error.value = null
+    categoriesInFlight = null
+    itemsInFlight = null
+    itemsInFlightHouseholdId = null
   }
 
   async function createItem(payload: Omit<TablesInsert<'items'>, 'household_id'>) {
@@ -72,6 +138,7 @@ export function useInventory() {
 
     const row = data as ItemWithCategory
     items.value = [...items.value, row].sort((a, b) => a.name.localeCompare(b.name))
+    itemsHouseholdId.value = householdId
     return { data: row, error: null }
   }
 
@@ -115,6 +182,7 @@ export function useInventory() {
     error,
     fetchCategories,
     fetchItems,
+    clearInventory,
     createItem,
     updateItem,
     deleteItem

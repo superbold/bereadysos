@@ -2,6 +2,7 @@ export default defineNuxtPlugin(() => {
   const user = useSupabaseUser()
   const { fetchHousehold, fetchAllMemberships, clearHousehold } = useHousehold()
   const { clearProfile } = useProfile()
+  const { clearInventory } = useInventory()
   const { bootstrapProfileFromAuth } = useProfileBootstrap()
 
   watch(user, async (value) => {
@@ -12,6 +13,7 @@ export default defineNuxtPlugin(() => {
     } else {
       clearHousehold()
       clearProfile()
+      clearInventory()
     }
   }, { immediate: true })
 })

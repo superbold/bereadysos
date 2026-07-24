@@ -405,9 +405,17 @@ export function useShopRuns() {
     return null
   })
 
-  watch(household, () => {
-    loadRuns()
-  }, { immediate: true })
+  watch(
+    () => household.value?.id,
+    (householdId) => {
+      if (householdId) {
+        loadRuns()
+      } else {
+        runs.value = []
+      }
+    },
+    { immediate: true }
+  )
 
   return {
     runs,

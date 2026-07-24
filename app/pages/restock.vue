@@ -207,11 +207,14 @@ onMounted(async () => {
   await handleRestockDeepLink()
 })
 
-watch(household, async (value) => {
-  if (value) {
-    await loadData()
+watch(
+  () => household.value?.id,
+  async (householdId, previousId) => {
+    if (householdId && previousId && householdId !== previousId) {
+      await loadData()
+    }
   }
-})
+)
 
 watch(
   () => [route.query.start, route.hash, hasActiveCoordinationRun.value, openGaps.value.length],

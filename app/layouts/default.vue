@@ -135,8 +135,19 @@ watch(user, async (value) => {
   if (!value) {
     return
   }
-  await Promise.all([fetchCategories(), fetchItems()])
+  await fetchCategories()
 }, { immediate: true })
+
+watch(
+  () => household.value?.id,
+  async (householdId) => {
+    if (!householdId) {
+      return
+    }
+    await Promise.all([fetchCategories(), fetchItems()])
+  },
+  { immediate: true }
+)
 
 watch(mobileNavOpen, (open) => {
   if (!open) {

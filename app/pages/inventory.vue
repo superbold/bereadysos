@@ -172,11 +172,14 @@ onMounted(async () => {
   await loadInventory()
 })
 
-watch(household, async (value) => {
-  if (value) {
-    await loadInventory()
+watch(
+  () => household.value?.id,
+  async (householdId, previousId) => {
+    if (householdId && previousId && householdId !== previousId) {
+      await loadInventory()
+    }
   }
-})
+)
 
 async function onFormSubmit(payload: {
   name: string

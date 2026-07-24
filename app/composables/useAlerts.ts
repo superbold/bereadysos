@@ -53,11 +53,14 @@ export function useAlerts() {
     loaded.value = true
   }
 
-  watch(household, async (value) => {
-    if (value) {
-      await loadAlerts()
+  watch(
+    () => household.value?.id,
+    async (householdId, previousId) => {
+      if (householdId && previousId && householdId !== previousId) {
+        await loadAlerts()
+      }
     }
-  })
+  )
 
   return {
     alerts,

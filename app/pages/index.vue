@@ -182,11 +182,14 @@ onMounted(async () => {
   }
 })
 
-watch(household, async (value) => {
-  if (value) {
-    await loadDashboardData()
+watch(
+  () => household.value?.id,
+  async (householdId, previousId) => {
+    if (householdId && previousId && householdId !== previousId) {
+      await loadDashboardData()
+    }
   }
-})
+)
 
 async function applyTargetDays(days: number) {
   if (!household.value || household.value.target_days === days) {
