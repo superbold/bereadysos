@@ -723,7 +723,12 @@
   align-items: center;
   gap: 0.5rem;
   min-width: 0;
+  flex-shrink: 0;
   text-decoration: none;
+}
+
+.app-shell__brand-title {
+  white-space: nowrap;
 }
 
 /* Global alerts panel — icon (shape), severity (color), title + detail (text) */
